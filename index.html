@@ -1913,6 +1913,7 @@
     }
 
     function buildIdentity(id, data) {
+      const refsHtml = (data.idRefs || []).map(r => `<div class="id-ref-item"><img src="${r.url}" class="id-ref-img"><span class="id-ref-name">${r.name}</span><button class="id-ref-del" onclick="this.closest('.id-ref-item').remove()">×</button></div>`).join('');
       return `
   <div style="padding:10px 13px 8px;display:flex;align-items:center;justify-content:space-between">
     <span style="font-family:'Syne',sans-serif;font-size:9px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--t3)">Identidade Visual</span>
@@ -1922,8 +1923,7 @@
     <div class="id-sec-label">Logotipo</div>
     <label style="cursor:pointer;display:block">
       <div id="id-logo-${id}" class="id-upload-box">
-        <span style="font-size:16px;color:var(--t4)">⊕</span>
-        <span style="font-size:9px;color:var(--t4)">Upload logo</span>
+        ${data.logoUrl ? `<img src="${data.logoUrl}" style="max-height:52px;max-width:100%;object-fit:contain;padding:4px">` : `<span style="font-size:16px;color:var(--t4)">⊕</span><span style="font-size:9px;color:var(--t4)">Upload logo</span>`}
       </div>
       <input type="file" accept="image/*" style="display:none" onchange="handleLogo(event,'${id}')">
     </label>
@@ -1950,7 +1950,9 @@
 
   <div class="id-section">
     <div class="id-sec-label">Referências Visuais</div>
-    <div id="id-refs-${id}" class="id-ref-list"></div>
+    <div id="id-refs-${id}" class="id-ref-list">
+      ${refsHtml}
+    </div>
     <label style="cursor:pointer;display:block;margin-top:5px">
       <div style="padding:5px 8px;border:1px dashed var(--b2);border-radius:6px;display:flex;align-items:center;gap:5px;font-size:10px;color:var(--t4);transition:border-color .15s"
            onmouseover="this.style.borderColor='var(--b3)'" onmouseout="this.style.borderColor='var(--b2)'">
@@ -1962,7 +1964,7 @@
 
   <div class="id-section" style="border-bottom:none">
     <div class="id-sec-label">Prompt Base</div>
-    <textarea class="id-prompt-ta" placeholder="Instruções gerais de identidade visual...">Seguir exatamente a paleta de cores e estilo visual da marca. Usar a logo fornecida. Manter coerência visual com as referências de estilo.</textarea>
+    <textarea class="id-prompt-ta" placeholder="Instruções gerais de identidade visual..." oninput="cards['${id}']&&(cards['${id}'].data.promptBase=this.value);saveCurrentWf()">${data.promptBase || 'Seguir exatamente a paleta de cores e estilo visual da marca. Usar a logo fornecida. Manter coerência visual com as referências de estilo.'}</textarea>
   </div>
 
   <div class="id-dot" data-cid="${id}"></div>`;
@@ -1976,10 +1978,12 @@
   </div>
   <div class="cr-body">
     <div class="cr-preview" id="cr-prev-${id}">
+      ${genImgs[id]?.url ? `<img src="${genImgs[id].url}" style="width:100%;height:100%;object-fit:cover">` : `
       <div class="cr-empty-wrap">
         <div class="cr-empty-icon">⊡</div>
         <div class="cr-empty-txt">Aguardando geração</div>
       </div>
+      `}
     </div>
     <div class="cr-controls">
       <select class="cr-sel" id="cr-q-${id}">
@@ -2017,8 +2021,7 @@
   <div class="ref-body">
     <label style="cursor:pointer;display:block">
       <div id="ref-box-${id}" class="ref-upload-box">
-        <span style="font-size:16px;color:var(--t4)">⊕</span>
-        <span style="font-size:9px;color:var(--t4)">Upload imagem</span>
+        ${data.refUrl ? `<img src="${data.refUrl}">` : `<span style="font-size:16px;color:var(--t4)">⊕</span><span style="font-size:9px;color:var(--t4)">Upload imagem</span>`}
       </div>
       <input type="file" accept="image/*" style="display:none" onchange="handleRef(event,'${id}')">
     </label>
@@ -2035,7 +2038,7 @@
   </div>
   <div class="copy-body">
     <textarea class="copy-ta" id="copy-ta-${id}" rows="4" placeholder="Texto do anúncio..."
-      oninput="cards['${id}']&&(cards['${id}'].data.copy=this.value)"></textarea>
+      oninput="cards['${id}']&&(cards['${id}'].data.copy=this.value);saveCurrentWf()">${data.copy||''}</textarea>
   </div>
   <div class="copy-dot" data-cid="${id}"></div>`;
     }
@@ -2043,29 +2046,48 @@
     /* ═══ FILE HANDLERS ═══ */
     function handleLogo(e, id) {
       const f = e.target.files[0]; if (!f) return;
-      const url = URL.createObjectURL(f);
-      const box = document.getElementById('id-logo-' + id);
-      if (box) box.innerHTML = `<img src="${url}" style="max-height:52px;max-width:100%;object-fit:contain;padding:4px">`;
-      if (cards[id]) cards[id].data.logoUrl = url;
+      const reader = new FileReader();
+      reader.onload = ev => {
+        const url = ev.target.result;
+        const box = document.getElementById('id-logo-' + id);
+        if (box) box.innerHTML = `<img src="${url}" style="max-height:52px;max-width:100%;object-fit:contain;padding:4px">`;
+        if (cards[id]) cards[id].data.logoUrl = url;
+        saveCurrentWf();
+      };
+      reader.readAsDataURL(f);
     }
     function handleIdRef(e, id) {
       const f = e.target.files[0]; if (!f) return;
-      const url = URL.createObjectURL(f);
-      const name = f.name.replace(/\.[^.]+$/, '').slice(0, 22);
-      const list = document.getElementById('id-refs-' + id);
-      if (!list) return;
-      const rid = 'idr_' + uid();
-      const item = document.createElement('div');
-      item.className = 'id-ref-item';
-      item.innerHTML = `<img src="${url}" class="id-ref-img"><span class="id-ref-name">${name}</span><button class="id-ref-del" onclick="this.closest('.id-ref-item').remove()">×</button>`;
-      list.appendChild(item);
+      const reader = new FileReader();
+      reader.onload = ev => {
+        const url = ev.target.result;
+        const name = f.name.replace(/\.[^.]+$/, '').slice(0, 22);
+        const list = document.getElementById('id-refs-' + id);
+        if (list) {
+          const item = document.createElement('div');
+          item.className = 'id-ref-item';
+          item.innerHTML = `<img src="${url}" class="id-ref-img"><span class="id-ref-name">${name}</span><button class="id-ref-del" onclick="this.closest('.id-ref-item').remove()">×</button>`;
+          list.appendChild(item);
+        }
+        if (cards[id]) {
+          if (!cards[id].data.idRefs) cards[id].data.idRefs = [];
+          cards[id].data.idRefs.push({ url, name });
+        }
+        saveCurrentWf();
+      };
+      reader.readAsDataURL(f);
     }
     function handleRef(e, id) {
       const f = e.target.files[0]; if (!f) return;
-      const url = URL.createObjectURL(f);
-      const box = document.getElementById('ref-box-' + id);
-      if (box) box.innerHTML = `<img src="${url}">`;
-      if (cards[id]) cards[id].data.refUrl = url;
+      const reader = new FileReader();
+      reader.onload = ev => {
+        const url = ev.target.result;
+        const box = document.getElementById('ref-box-' + id);
+        if (box) box.innerHTML = `<img src="${url}">`;
+        if (cards[id]) cards[id].data.refUrl = url;
+        saveCurrentWf();
+      };
+      reader.readAsDataURL(f);
     }
     function addIdFont(id) {
       const name = prompt('Nome da fonte:'); if (!name) return;
@@ -2162,10 +2184,22 @@
       }
     }
 
-    function dlCard(id) {
+    async function dlCard(id) {
       const d = genImgs[id]; if (!d?.url) { alert('Nenhuma imagem gerada ainda.'); return }
-      const a = document.createElement('a'); a.href = d.url; a.download = `criativo_${id}_${Date.now()}.png`;
-      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+
+      try {
+        const res = await fetch(d.url);
+        const blob = await res.blob();
+        const localUrl = URL.createObjectURL(blob);
+        const a = document.createElement('a'); a.href = localUrl; a.download = `criativo_${id}_${Date.now()}.png`;
+        document.body.appendChild(a); a.click(); document.body.removeChild(a);
+        setTimeout(() => URL.revokeObjectURL(localUrl), 5000);
+      } catch (e) {
+        // Fallback para abrir a url (se CORS impedir fetch)
+        const a = document.createElement('a'); a.href = d.url; a.download = `criativo_${id}_${Date.now()}.png`;
+        a.target = '_blank';
+        document.body.appendChild(a); a.click(); document.body.removeChild(a);
+      }
     }
     function dlAll() { Object.keys(genImgs).forEach((id, i) => setTimeout(() => dlCard(id), i * 600)) }
     function toggleAlter(id) { document.getElementById('alter-' + id)?.classList.toggle('open') }
@@ -2232,7 +2266,12 @@
     }
     function libUpload(e, idx) {
       const f = e.target.files[0]; if (!f) return;
-      libItems[idx].img = URL.createObjectURL(f); renderLib();
+      const reader = new FileReader();
+      reader.onload = ev => {
+        libItems[idx].img = ev.target.result; renderLib();
+        saveCurrentWf();
+      };
+      reader.readAsDataURL(f);
     }
     function delLibItem(idx) { if (confirm('Remover?')) { libItems.splice(idx, 1); renderLib() } }
 
@@ -2259,10 +2298,16 @@
         // save minimal card data
         wf.cards = {};
         Object.entries(cards).forEach(([id, c]) => {
-          wf.cards[id] = { type: c.type, x: c.x, y: c.y, data: { copy: c.data?.copy || '' } };
+          wf.cards[id] = { type: c.type, x: c.x, y: c.y, data: c.data || {} };
         });
         wf.conns = conns.slice();
       }
+      try {
+        localStorage.setItem('CA_workflows', JSON.stringify(workflows));
+        localStorage.setItem('CA_current_wf', currentWf);
+        localStorage.setItem('CA_libItems', JSON.stringify(libItems));
+        localStorage.setItem('CA_genImgs', JSON.stringify(genImgs));
+      } catch (e) {}
     }
     function loadWf(id) {
       canvas.innerHTML = ''; svgBack.innerHTML = ''; cards = {}; conns = [];
@@ -2338,7 +2383,29 @@
 
     /* ═══ INIT ═══ */
     function initDefault() {
-      // Start with a zoom out so everything fits
+      // Restore state if available
+      try {
+        const savedWfs = localStorage.getItem('CA_workflows');
+        const savedLib = localStorage.getItem('CA_libItems');
+        const savedImgs = localStorage.getItem('CA_genImgs');
+
+        if (savedWfs) workflows = JSON.parse(savedWfs);
+        if (savedLib) libItems = JSON.parse(savedLib);
+        if (savedImgs) genImgs = JSON.parse(savedImgs);
+
+        if (savedWfs) {
+          const cwf = localStorage.getItem('CA_current_wf') || workflows[0].id;
+          currentWf = cwf;
+          loadWf(cwf);
+          document.getElementById('wf-name').textContent = workflows.find(w => w.id === cwf)?.name || '';
+          renderWfList();
+          renderLib();
+          Object.entries(genImgs).forEach(([id, img]) => addToGallery(id, img.url));
+          return;
+        }
+      } catch (e) {}
+
+      // Default layout if completely clean
       scale = 0.72; panX = 60; panY = 60;
       applyTransform();
 
@@ -2365,7 +2432,6 @@
         const cpid = spawnCard('copy', 260 + i * colGap, rowGap * 2 + 50);
         const numEl = document.querySelector(`#${cpid} .copy-num`);
         if (numEl) numEl.textContent = '#' + (i + 1);
-        const ta = document.getElementById('copy-ta-' + cpid);
         setTimeout(((cpid, i) => () => { addConn(cpid, resultIds[i]) })(cpid, i), 120);
       }
 
@@ -2384,6 +2450,8 @@
         { img: '', text: 'Lighting: luz natural lateral' },
         { img: '', text: 'Mood: profissional e limpo' },
       ];
+      
+      saveCurrentWf();
     }
 
     // Run after DOM fully ready
