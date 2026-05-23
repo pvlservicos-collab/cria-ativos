@@ -274,14 +274,46 @@
       border-top: 1px solid var(--b1)
     }
 
+    .id-sec-hdr {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 6px
+    }
+
     .id-sec-label {
       font-size: 8px;
       font-family: 'DM Mono', monospace;
       color: var(--t4);
       letter-spacing: .12em;
       text-transform: uppercase;
-      margin-bottom: 6px
+      margin-bottom: 0
     }
+
+    .id-toggle {
+      width: 26px;
+      height: 14px;
+      border-radius: 7px;
+      background: var(--b2);
+      cursor: pointer;
+      position: relative;
+      transition: background .2s;
+      flex-shrink: 0
+    }
+    .id-toggle.on { background: #3a5a3a }
+    .id-toggle::after {
+      content: '';
+      position: absolute;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--t4);
+      top: 2px;
+      left: 2px;
+      transition: all .2s
+    }
+    .id-toggle.on::after { left: 14px; background: #8ab88a }
+    .id-sc-off { opacity: .22; pointer-events: none }
 
     .id-upload-box {
       width: 100%;
@@ -2009,57 +2041,68 @@
 
     function buildIdentity(id, data) {
       const refsHtml = (data.idRefs || []).map(r => `<div class="id-ref-item"><img src="${r.url}" class="id-ref-img"><span class="id-ref-name">${r.name}</span><button class="id-ref-del" onclick="this.closest('.id-ref-item').remove()">×</button></div>`).join('');
+      const tog = data.idToggles || {};
+      const on = k => tog[k] !== false;
+      const tgl = k => `<div class="id-toggle${on(k) ? ' on' : ''}" onclick="toggleIdSection('${id}','${k}',this)" title="${on(k) ? 'Enviando para IA' : 'Desativado'}"></div>`;
       return `
   <div style="padding:10px 13px 8px;display:flex;align-items:center;justify-content:space-between">
     <span style="font-family:'Syne',sans-serif;font-size:9px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--t3)">Identidade Visual</span>
   </div>
 
   <div class="id-section">
-    <div class="id-sec-label">Logotipo</div>
-    <label style="cursor:pointer;display:block">
-      <div id="id-logo-${id}" class="id-upload-box">
-        ${data.logoUrl ? `<img src="${data.logoUrl}" style="max-height:52px;max-width:100%;object-fit:contain;padding:4px">` : `<span style="font-size:16px;color:var(--t4)">⊕</span><span style="font-size:9px;color:var(--t4)">Upload logo</span>`}
+    <div class="id-sec-hdr"><div class="id-sec-label">Logotipo</div>${tgl('logo')}</div>
+    <div id="id-sc-logo-${id}"${!on('logo') ? ' class="id-sc-off"' : ''}>
+      <label style="cursor:pointer;display:block">
+        <div id="id-logo-${id}" class="id-upload-box">
+          ${data.logoUrl ? `<img src="${data.logoUrl}" style="max-height:52px;max-width:100%;object-fit:contain;padding:4px">` : `<span style="font-size:16px;color:var(--t4)">⊕</span><span style="font-size:9px;color:var(--t4)">Upload logo</span>`}
+        </div>
+        <input type="file" accept="image/*" style="display:none" onchange="handleLogo(event,'${id}')">
+      </label>
+    </div>
+  </div>
+
+  <div class="id-section">
+    <div class="id-sec-hdr"><div class="id-sec-label">Fontes</div>${tgl('fonts')}</div>
+    <div id="id-sc-fonts-${id}"${!on('fonts') ? ' class="id-sc-off"' : ''}>
+      <div id="id-fonts-${id}" class="id-chips">
+        <div class="id-chip" style="font-family:Syne">Syne</div>
+        <div class="id-chip" style="font-family:'DM Mono'">DM Mono</div>
+        <div class="id-chip-add" onclick="addIdFont('${id}')">+ fonte</div>
       </div>
-      <input type="file" accept="image/*" style="display:none" onchange="handleLogo(event,'${id}')">
-    </label>
-  </div>
-
-  <div class="id-section">
-    <div class="id-sec-label">Fontes</div>
-    <div id="id-fonts-${id}" class="id-chips">
-      <div class="id-chip" style="font-family:Syne">Syne</div>
-      <div class="id-chip" style="font-family:'DM Mono'">DM Mono</div>
-      <div class="id-chip-add" onclick="addIdFont('${id}')">+ fonte</div>
     </div>
   </div>
 
   <div class="id-section">
-    <div class="id-sec-label">Paleta de Cores</div>
-    <div id="id-colors-${id}" class="id-colors">
-      <div class="id-swatch" style="background:#e0e0e0" title="#e0e0e0"></div>
-      <div class="id-swatch" style="background:#1a1a1a" title="#1a1a1a"></div>
-      <div class="id-swatch" style="background:#666666" title="#666666"></div>
-      <div class="id-swatch-add" onclick="addIdColor('${id}')">+</div>
-    </div>
-  </div>
-
-  <div class="id-section">
-    <div class="id-sec-label">Referências Visuais</div>
-    <div id="id-refs-${id}" class="id-ref-list">
-      ${refsHtml}
-    </div>
-    <label style="cursor:pointer;display:block;margin-top:5px">
-      <div style="padding:5px 8px;border:1px dashed var(--b2);border-radius:6px;display:flex;align-items:center;gap:5px;font-size:10px;color:var(--t4);transition:border-color .15s"
-           onmouseover="this.style.borderColor='var(--b3)'" onmouseout="this.style.borderColor='var(--b2)'">
-        <span style="font-size:13px">⊕</span> Adicionar referência
+    <div class="id-sec-hdr"><div class="id-sec-label">Paleta de Cores</div>${tgl('colors')}</div>
+    <div id="id-sc-colors-${id}"${!on('colors') ? ' class="id-sc-off"' : ''}>
+      <div id="id-colors-${id}" class="id-colors">
+        <div class="id-swatch" style="background:#e0e0e0" title="#e0e0e0"></div>
+        <div class="id-swatch" style="background:#1a1a1a" title="#1a1a1a"></div>
+        <div class="id-swatch" style="background:#666666" title="#666666"></div>
+        <div class="id-swatch-add" onclick="addIdColor('${id}')">+</div>
       </div>
-      <input type="file" accept="image/*" style="display:none" onchange="handleIdRef(event,'${id}')">
-    </label>
+    </div>
+  </div>
+
+  <div class="id-section">
+    <div class="id-sec-hdr"><div class="id-sec-label">Referências Visuais</div>${tgl('refs')}</div>
+    <div id="id-sc-refs-${id}"${!on('refs') ? ' class="id-sc-off"' : ''}>
+      <div id="id-refs-${id}" class="id-ref-list">${refsHtml}</div>
+      <label style="cursor:pointer;display:block;margin-top:5px">
+        <div style="padding:5px 8px;border:1px dashed var(--b2);border-radius:6px;display:flex;align-items:center;gap:5px;font-size:10px;color:var(--t4);transition:border-color .15s"
+             onmouseover="this.style.borderColor='var(--b3)'" onmouseout="this.style.borderColor='var(--b2)'">
+          <span style="font-size:13px">⊕</span> Adicionar referência
+        </div>
+        <input type="file" accept="image/*" style="display:none" onchange="handleIdRef(event,'${id}')">
+      </label>
+    </div>
   </div>
 
   <div class="id-section" style="border-bottom:none">
-    <div class="id-sec-label">Prompt Base</div>
-    <textarea class="id-prompt-ta" placeholder="Instruções gerais de identidade visual..." oninput="cards['${id}']&&(cards['${id}'].data.promptBase=this.value);saveCurrentWf()">${data.promptBase || 'Seguir exatamente a paleta de cores e estilo visual da marca. Usar a logo fornecida. Manter coerência visual com as referências de estilo.'}</textarea>
+    <div class="id-sec-hdr"><div class="id-sec-label">Prompt Base</div>${tgl('prompt')}</div>
+    <div id="id-sc-prompt-${id}"${!on('prompt') ? ' class="id-sc-off"' : ''}>
+      <textarea class="id-prompt-ta" placeholder="Instruções gerais de identidade visual..." oninput="cards['${id}']&&(cards['${id}'].data.promptBase=this.value);saveCurrentWf()">${data.promptBase || 'Seguir exatamente a paleta de cores e estilo visual da marca. Usar a logo fornecida. Manter coerência visual com as referências de estilo.'}</textarea>
+    </div>
   </div>
 
   <div class="id-dot" data-cid="${id}"></div>`;
@@ -2209,24 +2252,59 @@
       inp.click();
     }
 
+    /* ═══ TOGGLE IDENTITY SECTIONS ═══ */
+    function toggleIdSection(cardId, section, el) {
+      if (!cards[cardId]) return;
+      if (!cards[cardId].data.idToggles) cards[cardId].data.idToggles = {};
+      const isOn = el.classList.contains('on');
+      cards[cardId].data.idToggles[section] = !isOn;
+      el.classList.toggle('on', !isOn);
+      el.title = !isOn ? 'Enviando para IA' : 'Desativado';
+      const cont = document.getElementById('id-sc-' + section + '-' + cardId);
+      if (cont) cont.classList.toggle('id-sc-off', isOn);
+      saveCurrentWf();
+    }
+
     /* ═══ PROMPT BUILDING ═══ */
     function buildPrompt(id) {
       const linked = conns.filter(c => c.to === id).map(c => cards[c.from]).filter(Boolean);
-      let idText = '', copyText = '', hasRef = false;
+      let idParts = [], copyText = '', hasRef = false;
       linked.forEach(src => {
         if (src.type === 'identity') {
-          const ta = document.querySelector(`#${Object.keys(cards).find(k => cards[k].type === 'identity')} .id-prompt-ta`);
-          idText = ta ? ta.value : 'Seguir identidade visual da marca.';
+          const idKey = Object.keys(cards).find(k => cards[k].type === 'identity');
+          const idEl = idKey ? document.getElementById(idKey) : null;
+          const tog = src.data.idToggles || {};
+          const on = k => tog[k] !== false;
+
+          if (on('prompt')) {
+            const ta = idEl?.querySelector('.id-prompt-ta');
+            if (ta?.value) idParts.push(ta.value);
+          }
+          if (on('fonts') && idEl) {
+            const fonts = [...idEl.querySelectorAll('.id-chip')].map(c => c.textContent.trim()).filter(Boolean);
+            if (fonts.length) idParts.push(`Fontes da marca: ${fonts.join(', ')}.`);
+          }
+          if (on('colors') && idEl) {
+            const colors = [...idEl.querySelectorAll('.id-swatch[title]')].map(s => s.title).filter(Boolean);
+            if (colors.length) idParts.push(`Paleta de cores (hex): ${colors.join(', ')}.`);
+          }
+          if (on('logo') && src.data.logoUrl) {
+            idParts.push('Incorporar a logo da marca ao criativo.');
+          }
+          if (on('refs') && src.data.idRefs?.length) {
+            idParts.push(`Referências de identidade: ${src.data.idRefs.map(r => r.name).join(', ')}.`);
+          }
         }
         if (src.type === 'copy' && src.data?.copy) copyText = src.data.copy;
         if (src.type === 'ref') hasRef = true;
       });
+      const idText = idParts.join('\n');
       const fmt = document.getElementById('cr-f-' + id)?.value || '1024x1024';
       let p = `Crie uma imagem publicitária de alta qualidade, formato ${fmt}.\n\n`;
-      if (idText) p += `IDENTIDADE: ${idText}\n\n`;
+      if (idText) p += `IDENTIDADE:\n${idText}\n\n`;
       if (copyText) p += `TEXTO DO ANÚNCIO: "${copyText}"\n\n`;
       if (hasRef) p += `Use o estilo visual da imagem de referência como inspiração.\n\n`;
-      if (!copyText && !hasRef) p += `Seja criativo. Resultado profissional e impactante para marketing digital.\n\n`;
+      if (!idText && !copyText && !hasRef) p += `Seja criativo. Resultado profissional e impactante para marketing digital.\n\n`;
       const alterTa = document.querySelector(`#alter-${id} .alter-ta`);
       if (alterTa?.value) p += `AJUSTES: ${alterTa.value}\n\n`;
       p += `Fotorrealista, profissional, alta qualidade, adequado para redes sociais.`;
