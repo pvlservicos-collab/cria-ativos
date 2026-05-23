@@ -12,7 +12,8 @@
       "Bash(where gh *)",
       "Bash(where node *)",
       "PowerShell(Resolve-DnsName github.com 2>&1)",
-      "PowerShell($env:GIT_CURL_VERBOSE = \"1\"; git ls-remote origin HEAD 2>&1 | Select-Object -First 20)"
+      "PowerShell($env:GIT_CURL_VERBOSE = \"1\"; git ls-remote origin HEAD 2>&1 | Select-Object -First 20)",
+      "Bash(git commit -m ' *)"
     ],
     "additionalDirectories": [
       "C:\\Windows\\System32\\drivers\\etc"
