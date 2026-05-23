@@ -1629,8 +1629,6 @@
         <div id="tb-right">
           <button class="tb-btn" onclick="clearConns()">Limpar linhas</button>
           <button class="tb-btn" onclick="autoConnect()">Auto-conectar</button>
-          <button class="tb-btn" onclick="loadProject()">⬆ Carregar</button>
-          <button class="tb-btn" onclick="saveProject()">⬇ Salvar</button>
           <button class="tb-btn hi" id="gen-all-btn" onclick="genAll()">⚡ Gerar todos</button>
         </div>
       </div>
@@ -1963,6 +1961,10 @@
         cy = (-panY / scale) + (r.height / scale) * 0.35 + Math.random() * 80;
       }
       cards[cid] = { type, x: cx, y: cy, data: data || {} };
+      if (type === 'identity') {
+        if (!cards[cid].data.fonts) cards[cid].data.fonts = ['Syne', 'DM Mono'];
+        if (!cards[cid].data.colors) cards[cid].data.colors = ['#e0e0e0', '#1a1a1a', '#666666'];
+      }
 
       const wrap = document.createElement('div');
       wrap.id = cid;
@@ -2081,8 +2083,7 @@
     <div class="id-sec-hdr"><div class="id-sec-label">Fontes</div>${tgl('fonts')}</div>
     <div id="id-sc-fonts-${id}"${!on('fonts') ? ' class="id-sc-off"' : ''}>
       <div id="id-fonts-${id}" class="id-chips">
-        <div class="id-chip" style="font-family:Syne">Syne</div>
-        <div class="id-chip" style="font-family:'DM Mono'">DM Mono</div>
+        ${(data.fonts || ['Syne', 'DM Mono']).map(f => `<div class="id-chip" style="font-family:'${f}'">${f}</div>`).join('')}
         <div class="id-chip-add" onclick="addIdFont('${id}')">+ fonte</div>
       </div>
     </div>
@@ -2092,9 +2093,7 @@
     <div class="id-sec-hdr"><div class="id-sec-label">Paleta de Cores</div>${tgl('colors')}</div>
     <div id="id-sc-colors-${id}"${!on('colors') ? ' class="id-sc-off"' : ''}>
       <div id="id-colors-${id}" class="id-colors">
-        <div class="id-swatch" style="background:#e0e0e0" title="#e0e0e0"></div>
-        <div class="id-swatch" style="background:#1a1a1a" title="#1a1a1a"></div>
-        <div class="id-swatch" style="background:#666666" title="#666666"></div>
+        ${(data.colors || ['#e0e0e0', '#1a1a1a', '#666666']).map(c => `<div class="id-swatch" style="background:${c}" title="${c}"></div>`).join('')}
         <div class="id-swatch-add" onclick="addIdColor('${id}')">+</div>
       </div>
     </div>
@@ -2251,8 +2250,13 @@
       const name = prompt('Nome da fonte:'); if (!name) return;
       const cont = document.getElementById('id-fonts-' + id); if (!cont) return;
       const chip = document.createElement('div');
-      chip.className = 'id-chip'; chip.textContent = name;
+      chip.className = 'id-chip'; chip.style.fontFamily = "'" + name + "'"; chip.textContent = name;
       cont.insertBefore(chip, cont.lastElementChild);
+      if (cards[id]) {
+        if (!cards[id].data.fonts) cards[id].data.fonts = ['Syne', 'DM Mono'];
+        cards[id].data.fonts.push(name);
+        saveCurrentWf();
+      }
     }
     function addIdColor(id) {
       const inp = document.createElement('input'); inp.type = 'color'; inp.value = '#ffffff';
@@ -2264,6 +2268,11 @@
         sw.className = 'id-swatch'; sw.style.background = inp.value; sw.title = inp.value;
         cont.insertBefore(sw, cont.lastElementChild);
         document.body.removeChild(inp);
+        if (cards[id]) {
+          if (!cards[id].data.colors) cards[id].data.colors = ['#e0e0e0', '#1a1a1a', '#666666'];
+          cards[id].data.colors.push(inp.value);
+          saveCurrentWf();
+        }
       });
       inp.click();
     }
@@ -2633,11 +2642,7 @@
         localStorage.setItem('CA_workflows', JSON.stringify(workflows));
         localStorage.setItem('CA_current_wf', currentWf);
         localStorage.setItem('CA_libItems', JSON.stringify(libItems));
-        try {
-          localStorage.setItem('CA_genImgs', JSON.stringify(genImgs));
-        } catch (e) {
-          console.warn('Imagens geradas não salvas (armazenamento cheio). Faça download antes de fechar.');
-        }
+        // genImgs (base64) kept in memory only — too large for localStorage
       } catch (e) {
         console.warn('Falha ao salvar estado:', e);
       }
@@ -2745,11 +2750,9 @@
       try {
         const savedWfs = localStorage.getItem('CA_workflows');
         const savedLib = localStorage.getItem('CA_libItems');
-        const savedImgs = localStorage.getItem('CA_genImgs');
 
         if (savedWfs) workflows = JSON.parse(savedWfs);
         if (savedLib) libItems = JSON.parse(savedLib);
-        if (savedImgs) genImgs = JSON.parse(savedImgs);
 
         if (savedWfs) {
           const cwf = localStorage.getItem('CA_current_wf') || workflows[0].id;
@@ -2758,7 +2761,6 @@
           document.getElementById('wf-name').textContent = workflows.find(w => w.id === cwf)?.name || '';
           renderWfList();
           renderLib();
-          Object.entries(genImgs).forEach(([id, img]) => addToGallery(id, img.url));
           return;
         }
       } catch (e) {}
