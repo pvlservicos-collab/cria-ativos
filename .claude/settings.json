@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(ping -n 2 github.com)",
+      "Bash(git config *)",
+      "Bash(findstr /i \"proxy\\\\|ssl\\\\|http\\\\|url\")",
+      "Bash(git ls-remote *)",
+      "Bash(curl -I https://github.com)",
+      "Bash(ipconfig /flushdns)",
+      "PowerShell(ipconfig /flushdns)"
+    ],
+    "additionalDirectories": [
+      "C:\\Windows\\System32\\drivers\\etc"
+    ]
+  }
+}
