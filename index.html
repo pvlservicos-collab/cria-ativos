@@ -1873,8 +1873,8 @@
     });
 
     document.addEventListener('mouseup', e => {
-      if (isPan) { isPan = false; boardView.style.cursor = 'default' }
-      dragId = null;
+      if (isPan) { isPan = false; boardView.style.cursor = 'default'; saveCurrentWf(); }
+      if (dragId) { saveCurrentWf(); dragId = null; } else { dragId = null; }
       if (resizingId) {
         saveCurrentWf();
         resizingId = null; resizeDir = null; resizeOrigin = null; resizeDims = null;
@@ -2139,18 +2139,17 @@
       `}
     </div>
     <div class="cr-controls">
-      <select class="cr-sel" id="cr-q-${id}">
-        <option>1</option><option>2</option><option>3</option><option>4</option>
+      <select class="cr-sel" id="cr-q-${id}" onchange="cards['${id}']&&(cards['${id}'].data.qty=this.value);saveCurrentWf()">
+        ${['1','2','3','4'].map(v=>`<option${(data.qty||'1')===v?' selected':''}>${v}</option>`).join('')}
       </select>
-      <select class="cr-sel" id="cr-f-${id}">
-        <option value="1024x1024">Quadrado 1024×1024</option>
-        <option value="1024x1792">Stories 1024×1792</option>
-        <option value="1792x1024">Feed FB 1792×1024</option>
-        <option value="1792x1024">Banner 1792×1024</option>
+      <select class="cr-sel" id="cr-f-${id}" onchange="cards['${id}']&&(cards['${id}'].data.fmt=this.value);saveCurrentWf()">
+        <option value="1024x1024"${(data.fmt||'1024x1024')==='1024x1024'?' selected':''}>Quadrado 1024×1024</option>
+        <option value="1024x1792"${data.fmt==='1024x1792'?' selected':''}>Stories 1024×1792</option>
+        <option value="1792x1024"${data.fmt==='1792x1024'?' selected':''}>Feed FB 1792×1024</option>
       </select>
-      <select class="cr-sel" id="cr-ql-${id}">
-        <option value="standard">1K</option>
-        <option value="hd">2K</option>
+      <select class="cr-sel" id="cr-ql-${id}" onchange="cards['${id}']&&(cards['${id}'].data.ql=this.value);saveCurrentWf()">
+        <option value="standard"${(data.ql||'standard')==='standard'?' selected':''}>1K</option>
+        <option value="hd"${data.ql==='hd'?' selected':''}>2K</option>
       </select>
     </div>
     <button class="cr-gen-btn" id="cr-gen-${id}" onclick="genCard('${id}')">⚡ GERAR</button>
