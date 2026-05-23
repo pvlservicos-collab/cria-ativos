@@ -1690,8 +1690,9 @@
         <div class="sv-sec">
           <div class="sv-title">Modelo Padrão</div>
           <select class="sv-input" id="def-model" style="width:auto">
-            <option value="dall-e-3">DALL-E 3</option>
+            <option value="gpt-image-2">GPT-Image-2</option>
             <option value="gpt-image-1">GPT-Image-1</option>
+            <option value="dall-e-3">DALL-E 3</option>
           </select>
         </div>
       </div>
@@ -2128,10 +2129,10 @@
         <option>1</option><option>2</option><option>3</option><option>4</option>
       </select>
       <select class="cr-sel" id="cr-f-${id}">
-        <option value="1024x1024">Quadrado</option>
-        <option value="1024x1792">Stories</option>
-        <option value="1792x1024">Feed FB</option>
-        <option value="1792x1024">Banner</option>
+        <option value="1024x1024">Quadrado 1024×1024</option>
+        <option value="1024x1792">Stories 1024×1792</option>
+        <option value="1792x1024">Feed FB 1792×1024</option>
+        <option value="1792x1024">Banner 1792×1024</option>
       </select>
       <select class="cr-sel" id="cr-ql-${id}">
         <option value="standard">1K</option>
@@ -2322,13 +2323,17 @@
       const prompt = buildPrompt(id);
       const fmtRaw = document.getElementById('cr-f-' + id)?.value || '1024x1024';
 
-      // gpt-image-1 uses different size values
-      const sizeRemap = { 'gpt-image-1': { '1024x1792': '1024x1536', '1792x1024': '1536x1024' } };
-      const fmt = (model === 'gpt-image-1' && sizeRemap['gpt-image-1'][fmtRaw]) ? sizeRemap['gpt-image-1'][fmtRaw] : fmtRaw;
+      // gpt-image-1/2 use different size values than dall-e-3
+      const sizeRemap = {
+        'gpt-image-1': { '1024x1792': '1024x1536', '1792x1024': '1536x1024' },
+        'gpt-image-2': { '1024x1792': '1024x1536', '1792x1024': '1536x1024' }
+      };
+      const fmt = sizeRemap[model]?.[fmtRaw] || fmtRaw;
 
       const qual = document.getElementById('cr-ql-' + id)?.value || 'standard';
-      // gpt-image-1 uses low/medium/high instead of standard/hd
-      const apiQuality = model === 'gpt-image-1' ? (qual === 'hd' ? 'high' : 'medium') : qual;
+      // gpt-image-1/2 use low/medium/high instead of standard/hd
+      const isGptModel = model === 'gpt-image-1' || model === 'gpt-image-2';
+      const apiQuality = isGptModel ? (qual === 'hd' ? 'high' : 'medium') : qual;
 
       if (prev) prev.innerHTML = `<div class="cr-empty-wrap"><div class="cr-empty-icon"><span class="spin" style="font-size:20px">↻</span></div><div class="cr-empty-txt">Gerando...</div></div>`;
       if (genBtn) { genBtn.classList.add('busy'); genBtn.innerHTML = '<span class="spin">↻</span> GERANDO' }
@@ -2344,8 +2349,8 @@
         const linked = conns.filter(c => c.to === id).map(c => cards[c.from]).filter(Boolean);
         const refCard = linked.find(src => src.type === 'ref' && src.data?.refUrl);
 
-        if (model === 'gpt-image-1' && refCard) {
-          // Send reference image via /edits endpoint (gpt-image-1 only)
+        if (isGptModel && refCard) {
+          // Send reference image via /edits endpoint (gpt-image-1/2 only)
           const dataUrl = refCard.data.refUrl;
           const base64 = dataUrl.split(',')[1];
           const mime = dataUrl.split(';')[0].split(':')[1] || 'image/png';
@@ -2357,7 +2362,7 @@
           const fd = new FormData();
           fd.append('image', refBlob, 'reference.png');
           fd.append('prompt', prompt);
-          fd.append('model', 'gpt-image-1');
+          fd.append('model', model);
           fd.append('n', '1');
           fd.append('size', fmt);
           fd.append('quality', apiQuality);
