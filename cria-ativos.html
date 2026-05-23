@@ -1,0 +1,1090 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cria-ativos</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,400;0,500;1,400&family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#080808;--bg2:#101010;--bg3:#161616;--bg4:#1e1e1e;--bg5:#252525;--bg6:#2c2c2c;
+  --b1:#1e1e1e;--b2:#2a2a2a;--b3:#383838;--b4:#484848;--b5:#585858;
+  --t1:#f0f0f0;--t2:#aaaaaa;--t3:#666666;--t4:#3a3a3a;
+  --accent:#e0e0e0;--accent2:#888;
+  --id-border:#303030;
+  --line-col:rgba(120,120,120,0.35);
+}
+html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);font-family:'DM Sans',sans-serif;color:var(--t1)}
+
+/* ─── APP SHELL ─── */
+#app{display:flex;width:100vw;height:100vh}
+#sidebar{width:52px;background:var(--bg2);border-right:1px solid var(--b1);display:flex;flex-direction:column;align-items:center;padding:10px 0;gap:6px;z-index:500;flex-shrink:0}
+#main{flex:1;display:flex;flex-direction:column;overflow:hidden;position:relative}
+#topbar{height:42px;background:var(--bg2);border-bottom:1px solid var(--b1);display:flex;align-items:center;padding:0 14px;gap:10px;z-index:400;flex-shrink:0;position:relative}
+
+/* ─── SIDEBAR ─── */
+.sb-btn{width:34px;height:34px;border-radius:8px;border:1px solid transparent;background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--t4);transition:all .15s;position:relative}
+.sb-btn:hover{background:var(--bg4);border-color:var(--b2);color:var(--t2)}
+.sb-btn.active{background:var(--bg4);border-color:var(--b3);color:var(--t1)}
+.sb-btn svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
+.sb-sep{width:26px;height:1px;background:var(--b1);margin:3px 0}
+.sb-logo{font-family:'Syne',sans-serif;font-weight:800;font-size:9px;color:var(--t4);letter-spacing:.12em;text-transform:uppercase;writing-mode:vertical-rl;transform:rotate(180deg);margin-bottom:4px;line-height:1}
+
+/* ─── TOPBAR ─── */
+#brand{font-family:'Syne',sans-serif;font-weight:800;font-size:15px;letter-spacing:.06em;color:var(--t1)}
+#brand span{color:var(--t3)}
+#wf-btn{display:flex;align-items:center;gap:5px;padding:3px 9px;border-radius:6px;border:1px solid var(--b2);background:var(--bg3);cursor:pointer;font-size:11px;color:var(--t2);font-family:'DM Sans',sans-serif;transition:all .15s}
+#wf-btn:hover{border-color:var(--b3);color:var(--t1)}
+#tb-right{margin-left:auto;display:flex;gap:8px;align-items:center}
+.tb-btn{padding:4px 10px;border-radius:6px;border:1px solid var(--b2);background:transparent;cursor:pointer;font-size:11px;color:var(--t3);font-family:'DM Sans',sans-serif;transition:all .15s}
+.tb-btn:hover{border-color:var(--b3);color:var(--t2)}
+.tb-btn.hi{border-color:var(--b3);color:var(--t1);background:var(--bg4)}
+
+/* ─── VIEWS ─── */
+.view{position:absolute;inset:0;display:none}
+.view.active{display:block}
+
+/* ─── CANVAS VIEW ─── */
+#canvas-wrap{width:100%;height:100%;position:relative;overflow:hidden;cursor:default}
+/* SVG lines layer — behind cards */
+#svg-back{position:absolute;inset:0;pointer-events:none;z-index:1;transform-origin:0 0;overflow:visible}
+/* canvas layer — cards on top of lines */
+#canvas{position:absolute;inset:0;transform-origin:0 0;z-index:2}
+/* ref cards float above result cards but below UI */
+/* copy cards at bottom */
+
+/* ─── IDENTITY CARD ─── */
+#identity-card{
+  position:absolute;left:20px;top:20px;width:220px;
+  background:linear-gradient(160deg,#141414,#111);
+  border:1px solid var(--id-border);border-radius:14px;
+  z-index:20;user-select:none;
+}
+.id-header{padding:12px 14px 0;display:flex;align-items:center;justify-content:space-between}
+.id-label{font-family:'Syne',sans-serif;font-size:9px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--t3)}
+.id-section{padding:10px 14px;border-top:1px solid var(--b1)}
+.id-sec-title{font-size:9px;font-family:'DM Mono',monospace;color:var(--t4);letter-spacing:.1em;text-transform:uppercase;margin-bottom:7px}
+.id-upload{width:100%;border:1px dashed var(--b2);border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s;background:var(--bg);overflow:hidden}
+.id-upload:hover{border-color:var(--b3)}
+.id-upload-inner{display:flex;flex-direction:column;align-items:center;gap:3px;padding:14px 0}
+.id-upload-icon{font-size:16px;color:var(--t4)}
+.id-upload-txt{font-size:9px;color:var(--t4)}
+.logo-preview-img{width:100%;max-height:64px;object-fit:contain;padding:8px}
+/* Colors */
+.colors-row{display:flex;gap:4px;flex-wrap:wrap}
+.color-swatch{width:24px;height:24px;border-radius:5px;cursor:pointer;border:1px solid var(--b2);position:relative;flex-shrink:0}
+.color-add{width:24px;height:24px;border-radius:5px;border:1px dashed var(--b3);display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--t4);font-size:14px;line-height:1;transition:all .15s}
+.color-add:hover{border-color:var(--b4);color:var(--t2)}
+/* Fonts */
+.font-row{display:flex;gap:4px;flex-wrap:wrap;align-items:center}
+.font-chip{padding:3px 7px;border-radius:5px;border:1px solid var(--b2);background:var(--bg3);font-size:10px;color:var(--t2);cursor:pointer;transition:all .15s}
+.font-chip:hover{border-color:var(--b3)}
+.font-add{padding:3px 7px;border-radius:5px;border:1px dashed var(--b2);font-size:10px;color:var(--t4);cursor:pointer;transition:all .15s}
+.font-add:hover{border-color:var(--b3);color:var(--t2)}
+/* References inside ID card */
+.id-ref-list{display:flex;flex-direction:column;gap:5px}
+.id-ref-item{display:flex;align-items:center;gap:6px;padding:4px 6px;background:var(--bg3);border-radius:6px;border:1px solid var(--b1)}
+.id-ref-thumb{width:28px;height:28px;border-radius:4px;object-fit:cover;background:var(--bg4);flex-shrink:0}
+.id-ref-name{font-size:10px;color:var(--t2);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.id-ref-del{width:16px;height:16px;border:none;background:transparent;color:var(--t4);cursor:pointer;font-size:12px;display:flex;align-items:center;justify-content:center;border-radius:3px}
+.id-ref-del:hover{color:var(--t2);background:var(--bg5)}
+/* Copy base */
+.copy-base-area{width:100%;border:none;background:transparent;font-size:10px;color:var(--t2);font-family:'DM Mono',monospace;line-height:1.65;resize:none;outline:none;min-height:60px}
+
+/* connect dot on right edge of identity card */
+.id-connect-dot{position:absolute;right:-6px;top:50%;transform:translateY(-50%);width:11px;height:11px;border-radius:50%;background:var(--b3);border:2px solid var(--bg2);cursor:crosshair;z-index:30;transition:background .15s}
+.id-connect-dot:hover{background:var(--b5)}
+
+/* ─── RESULT CARDS ─── */
+.card-result{
+  position:absolute;z-index:10;
+  width:230px;
+  background:linear-gradient(155deg,#0e0e0e,#141414);
+  border:1px solid var(--b1);border-radius:12px;
+  transition:border-color .15s;
+  user-select:none;
+}
+.card-result:hover{border-color:var(--b2)}
+.cr-handle{padding:9px 12px 0;cursor:grab;display:flex;align-items:center;justify-content:space-between}
+.cr-handle:active{cursor:grabbing}
+.cr-label{font-family:'Syne',sans-serif;font-size:9px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--t4)}
+.cr-model{font-size:9px;font-family:'DM Mono',monospace;padding:2px 5px;border-radius:4px;background:var(--bg4);border:1px solid var(--b2);color:var(--t3)}
+.cr-body{padding:8px 12px 12px}
+.cr-preview{width:100%;aspect-ratio:1/1;border-radius:8px;background:var(--bg);border:1px solid var(--b1);overflow:hidden;display:flex;align-items:center;justify-content:center;margin-bottom:8px;position:relative}
+.cr-empty{display:flex;flex-direction:column;align-items:center;gap:4px}
+.cr-empty-icon{font-size:22px;color:var(--t4)}
+.cr-empty-txt{font-size:9px;color:var(--t4);text-align:center}
+.cr-preview img{width:100%;height:100%;object-fit:cover}
+.cr-controls{display:grid;grid-template-columns:1fr 1fr 1fr;gap:4px;margin-bottom:7px}
+.cr-sel{background:var(--bg);border:1px solid var(--b1);border-radius:5px;color:var(--t2);font-size:9px;font-family:'DM Sans',sans-serif;padding:3px 4px;outline:none;cursor:pointer;width:100%}
+.cr-sel:hover{border-color:var(--b2)}
+.cr-gen{width:100%;padding:6px;border-radius:7px;background:var(--bg4);border:1px solid var(--b2);color:var(--t1);font-family:'Syne',sans-serif;font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;transition:all .15s}
+.cr-gen:hover{background:var(--bg5);border-color:var(--b3)}
+.cr-gen:active{transform:scale(.98)}
+.cr-gen.busy{color:var(--t4);pointer-events:none}
+.cr-post{display:none;gap:4px;margin-top:5px}
+.cr-post.show{display:flex}
+.cr-pbtn{flex:1;padding:4px;border-radius:5px;background:transparent;border:1px solid var(--b1);color:var(--t3);font-size:10px;font-family:'DM Sans',sans-serif;cursor:pointer;transition:all .15s;text-align:center}
+.cr-pbtn:hover{border-color:var(--b2);color:var(--t2)}
+.alter-box{display:none;margin-top:5px}
+.alter-box.open{display:block}
+.alter-ta{width:100%;padding:5px 7px;background:var(--bg);border:1px solid var(--b1);border-radius:6px;color:var(--t2);font-size:10px;font-family:'DM Mono',monospace;resize:none;outline:none;line-height:1.5}
+/* connect dot left of result card */
+.rc-dot{position:absolute;left:-6px;top:50%;transform:translateY(-50%);width:10px;height:10px;border-radius:50%;background:var(--b2);border:2px solid var(--bg2);cursor:crosshair;z-index:30;transition:background .15s}
+.rc-dot:hover,.rc-dot-right{background:var(--b4)}
+.rc-dot-right{position:absolute;right:-6px;top:50%;transform:translateY(-50%);width:10px;height:10px;border-radius:50%;background:var(--b2);border:2px solid var(--bg2);cursor:crosshair;z-index:30}
+
+/* ─── REFERENCE CARDS (floating, above results) ─── */
+.card-ref{
+  position:absolute;z-index:25;
+  width:150px;
+  background:linear-gradient(145deg,#111,#171717);
+  border:1px solid var(--b1);border-radius:10px;
+  user-select:none;transition:border-color .15s;
+}
+.card-ref:hover{border-color:var(--b2)}
+.ref-handle{padding:7px 10px 0;cursor:grab;display:flex;align-items:center;gap:5px}
+.ref-handle:active{cursor:grabbing}
+.ref-label{font-family:'Syne',sans-serif;font-size:8px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--t4)}
+.ref-body{padding:6px 10px 10px}
+.ref-upload{width:100%;height:90px;border:1px dashed var(--b2);border-radius:7px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;cursor:pointer;background:var(--bg);overflow:hidden;transition:all .15s}
+.ref-upload:hover{border-color:var(--b3)}
+.ref-upload-img{width:100%;height:90px;object-fit:cover;border-radius:7px}
+.ref-conn-dot{position:absolute;right:-6px;top:50%;transform:translateY(-50%);width:10px;height:10px;border-radius:50%;background:var(--b2);border:2px solid var(--bg2);cursor:crosshair;z-index:30;transition:background .15s}
+.ref-conn-dot:hover{background:var(--b4)}
+
+/* ─── COPY CARDS (bottom strip) ─── */
+.card-copy{
+  position:absolute;z-index:25;
+  width:190px;
+  background:linear-gradient(155deg,#151515,#1a1a1a);
+  border:1px solid var(--b1);border-radius:10px;
+  user-select:none;transition:border-color .15s;
+}
+.card-copy:hover{border-color:var(--b2)}
+.copy-handle{padding:7px 10px 0;cursor:grab;display:flex;align-items:center;justify-content:space-between}
+.copy-handle:active{cursor:grabbing}
+.copy-lbl{font-family:'Syne',sans-serif;font-size:8px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--t4)}
+.copy-num{font-family:'DM Mono',monospace;font-size:9px;color:var(--t4)}
+.copy-body{padding:5px 10px 10px}
+.copy-ta{width:100%;border:none;background:transparent;font-size:11px;color:var(--t2);font-family:'DM Mono',monospace;line-height:1.7;resize:none;outline:none;min-height:72px}
+.copy-conn-dot{position:absolute;right:-6px;top:50%;transform:translateY(-50%);width:10px;height:10px;border-radius:50%;background:var(--b2);border:2px solid var(--bg2);cursor:crosshair;z-index:30;transition:background .15s}
+.copy-conn-dot:hover{background:var(--b4)}
+
+/* ─── CONNECTIONS ─── */
+.conn-path{fill:none;stroke:var(--line-col);stroke-width:1;pointer-events:stroke;cursor:pointer}
+.conn-path:hover{stroke:rgba(160,160,160,.55)}
+
+/* ─── TEMP LINE ─── */
+#temp-svg{position:fixed;inset:0;pointer-events:none;z-index:9999;overflow:visible}
+
+/* ─── ZOOM CONTROLS ─── */
+#zoom-ctrl{position:fixed;bottom:20px;left:66px;z-index:600;display:flex;flex-direction:column;gap:3px}
+.zb{width:28px;height:28px;border-radius:7px;border:1px solid var(--b2);background:var(--bg2);color:var(--t3);font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s;font-family:'DM Mono',monospace}
+.zb:hover{background:var(--bg4);color:var(--t1)}
+#zoom-pct{font-size:8px;font-family:'DM Mono',monospace;color:var(--t4);text-align:center}
+
+/* ─── ADD BUTTON ─── */
+#add-wrap{position:fixed;bottom:20px;right:20px;z-index:600}
+#add-btn{width:38px;height:38px;border-radius:50%;border:1px solid var(--b3);background:var(--bg3);color:var(--t1);font-size:22px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s;line-height:1}
+#add-btn:hover{background:var(--bg5);border-color:var(--b4)}
+#add-menu{position:absolute;bottom:46px;right:0;background:var(--bg2);border:1px solid var(--b2);border-radius:10px;padding:5px;min-width:170px;display:none;box-shadow:0 8px 32px rgba(0,0,0,.7)}
+#add-menu.open{display:block}
+.am-item{padding:7px 10px;border-radius:7px;cursor:pointer;display:flex;align-items:center;gap:8px;font-size:12px;color:var(--t2);transition:all .15s}
+.am-item:hover{background:var(--bg4);color:var(--t1)}
+.am-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+
+/* ─── WORKFLOW DROPDOWN ─── */
+#wf-drop{position:absolute;top:50px;left:0;background:var(--bg2);border:1px solid var(--b2);border-radius:10px;padding:6px;min-width:200px;display:none;z-index:800;box-shadow:0 8px 32px rgba(0,0,0,.7)}
+#wf-drop.open{display:block}
+.wf-item{padding:7px 10px;border-radius:7px;cursor:pointer;display:flex;align-items:center;gap:8px;font-size:12px;color:var(--t2);transition:all .15s}
+.wf-item:hover{background:var(--bg4);color:var(--t1)}
+.wf-item.cur{color:var(--t1);background:var(--bg3)}
+.wf-acts{margin-left:auto;display:flex;gap:3px;opacity:0;transition:opacity .15s}
+.wf-item:hover .wf-acts{opacity:1}
+.wa{width:18px;height:18px;border:none;background:transparent;color:var(--t4);cursor:pointer;font-size:11px;border-radius:3px;display:flex;align-items:center;justify-content:center}
+.wa:hover{background:var(--bg5);color:var(--t2)}
+.wf-new{padding:7px 10px;border-radius:7px;cursor:pointer;display:flex;align-items:center;gap:8px;font-size:12px;color:var(--t4);transition:all .15s;border-top:1px solid var(--b1);margin-top:4px;padding-top:10px}
+.wf-new:hover{color:var(--t2)}
+
+/* ─── LOG VIEW ─── */
+#log-view{padding:16px;overflow-y:auto;height:100%;background:var(--bg)}
+.log-title{font-family:'Syne',sans-serif;font-weight:700;font-size:14px;color:var(--t1);margin-bottom:16px;display:flex;align-items:center;gap:8px}
+.log-entry{padding:10px 12px;background:var(--bg2);border:1px solid var(--b1);border-radius:8px;margin-bottom:6px;display:flex;align-items:center;gap:10px}
+.log-status{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.ls-waiting{background:#444}
+.ls-gen{background:#888;animation:pulse 1s infinite}
+.ls-done{background:#5a8a5a}
+.ls-err{background:#8a4a4a}
+.log-text{font-size:11px;color:var(--t2);font-family:'DM Mono',monospace;flex:1}
+.log-time{font-size:10px;color:var(--t4);font-family:'DM Mono',monospace}
+.log-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;height:60%;gap:8px;color:var(--t4);font-size:12px}
+
+/* ─── GALLERY VIEW ─── */
+#gallery-view{padding:20px;overflow-y:auto;height:100%;background:var(--bg)}
+.gv-header{display:flex;align-items:center;gap:12px;margin-bottom:20px}
+.gv-title{font-family:'Syne',sans-serif;font-weight:700;font-size:16px;color:var(--t1)}
+.gv-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+.gv-item{background:var(--bg2);border:1px solid var(--b1);border-radius:10px;overflow:hidden;cursor:pointer;transition:all .15s}
+.gv-item:hover{border-color:var(--b2);transform:translateY(-2px)}
+.gv-img{width:100%;aspect-ratio:1;object-fit:cover;background:var(--bg3)}
+.gv-info{padding:8px 10px}
+.gv-name{font-size:11px;color:var(--t1);font-weight:500}
+.gv-date{font-size:10px;color:var(--t4);font-family:'DM Mono',monospace;margin-top:2px}
+.gv-dl{margin-top:6px;width:100%;padding:4px;border-radius:5px;border:1px solid var(--b1);background:transparent;color:var(--t3);font-size:10px;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .15s}
+.gv-dl:hover{border-color:var(--b2);color:var(--t1)}
+.gv-filter{display:flex;gap:6px}
+.gf{padding:3px 10px;border-radius:5px;border:1px solid var(--b1);background:transparent;color:var(--t4);font-size:10px;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .15s}
+.gf:hover,.gf.on{border-color:var(--b2);color:var(--t1);background:var(--bg3)}
+
+/* ─── LIBRARY VIEW ─── */
+#library-view{padding:20px;overflow-y:auto;height:100%;background:var(--bg)}
+.lib-header{display:flex;align-items:center;gap:12px;margin-bottom:20px}
+.lib-title{font-family:'Syne',sans-serif;font-weight:700;font-size:16px;color:var(--t1)}
+.lib-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;align-items:start}
+.lib-card{background:var(--bg2);border:1px solid var(--b1);border-radius:10px;overflow:hidden;cursor:grab;transition:border-color .15s;position:relative}
+.lib-card:hover{border-color:var(--b2)}
+.lib-card.dragging-lib{opacity:.5;cursor:grabbing}
+.lib-card-img{width:100%;aspect-ratio:1;object-fit:cover;background:var(--bg3);display:block}
+.lib-card-img-empty{width:100%;aspect-ratio:1;display:flex;align-items:center;justify-content:center;background:var(--bg3);cursor:pointer;transition:all .15s}
+.lib-card-img-empty:hover{background:var(--bg4)}
+.lib-card-img-empty span{font-size:22px;color:var(--t4)}
+.lib-card-body{padding:7px 9px}
+.lib-card-ta{width:100%;border:none;background:transparent;font-size:10px;color:var(--t2);font-family:'DM Mono',monospace;resize:none;outline:none;line-height:1.6;min-height:40px}
+.lib-card-ta::placeholder{color:var(--t4)}
+.lib-add-card{background:var(--bg2);border:1px dashed var(--b2);border-radius:10px;aspect-ratio:1;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .15s;color:var(--t4);font-size:28px}
+.lib-add-card:hover{border-color:var(--b3);color:var(--t2);background:var(--bg3)}
+.lib-del{position:absolute;top:4px;right:4px;width:18px;height:18px;border-radius:4px;border:none;background:rgba(0,0,0,.6);color:var(--t3);font-size:11px;cursor:pointer;display:none;align-items:center;justify-content:center}
+.lib-card:hover .lib-del{display:flex}
+.lib-del:hover{color:var(--t1)}
+
+/* ─── SETTINGS VIEW ─── */
+#settings-view{padding:24px;overflow-y:auto;height:100%;background:var(--bg);max-width:500px}
+.sv-section{margin-bottom:28px}
+.sv-title{font-family:'Syne',sans-serif;font-size:11px;font-weight:700;color:var(--t4);letter-spacing:.12em;text-transform:uppercase;margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid var(--b1)}
+.sv-row{display:flex;align-items:center;gap:10px;padding:9px 12px;background:var(--bg2);border:1px solid var(--b1);border-radius:8px;margin-bottom:6px}
+.sv-name{font-size:12px;font-weight:500;color:var(--t1);flex:1}
+.sv-stat{font-size:10px;font-family:'DM Mono',monospace;color:var(--t4)}
+.sv-stat.ok{color:#6a8a6a}
+.sv-edit{padding:3px 9px;border-radius:5px;border:1px solid var(--b2);background:transparent;color:var(--t3);font-size:10px;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .15s}
+.sv-edit:hover{border-color:var(--b3);color:var(--t2)}
+.sv-input{width:100%;padding:7px 10px;background:var(--bg2);border:1px solid var(--b1);border-radius:7px;color:var(--t1);font-size:11px;font-family:'DM Mono',monospace;outline:none;margin-top:4px;transition:border-color .15s}
+.sv-input:focus{border-color:var(--b3)}
+.sv-lbl{font-size:11px;color:var(--t3);margin-bottom:3px;display:block}
+.sv-save{margin-top:8px;padding:5px 14px;border-radius:6px;border:1px solid var(--b2);background:var(--bg3);color:var(--t1);font-size:11px;font-family:'Syne',sans-serif;font-weight:600;letter-spacing:.08em;cursor:pointer;transition:all .15s}
+.sv-save:hover{background:var(--bg4);border-color:var(--b3)}
+
+/* ─── ANIMATIONS ─── */
+@keyframes pulse{0%,100%{opacity:.4}50%{opacity:1}}
+@keyframes spin{to{transform:rotate(360deg)}}
+.spin{animation:spin .7s linear infinite;display:inline-block}
+@keyframes fadeIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+.fadein{animation:fadeIn .25s ease}
+
+/* ─── SCROLLBAR ─── */
+::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--b2);border-radius:4px}
+</style>
+</head>
+<body>
+<div id="app">
+
+<!-- SIDEBAR -->
+<div id="sidebar">
+  <div class="sb-logo">CA</div>
+  <div class="sb-sep"></div>
+
+  <!-- Board -->
+  <button class="sb-btn active" data-view="board" title="Storyboard" onclick="nav('board',this)">
+    <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+  </button>
+
+  <!-- Log -->
+  <button class="sb-btn" data-view="log" title="Log de Geração" onclick="nav('log',this)">
+    <svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h10"/></svg>
+  </button>
+
+  <!-- Gallery -->
+  <button class="sb-btn" data-view="gallery" title="Galeria" onclick="nav('gallery',this)">
+    <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="14" rx="2"/><path d="M3 17l4-4 3 3 4-5 7 6"/></svg>
+  </button>
+
+  <!-- Library -->
+  <button class="sb-btn" data-view="library" title="Biblioteca" onclick="nav('library',this)">
+    <svg viewBox="0 0 24 24"><path d="M19 3H5a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2V5a2 2 0 00-2-2z"/><path d="M9 9h6M9 13h6M9 17h4"/></svg>
+  </button>
+
+  <div class="sb-sep"></div>
+
+  <!-- Settings -->
+  <button class="sb-btn" data-view="settings" title="Configurações" onclick="nav('settings',this)">
+    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v2m0 16v2M4.22 4.22l1.42 1.42m12.72 12.72l1.42 1.42M2 12h2m16 0h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+  </button>
+</div>
+
+<!-- MAIN -->
+<div id="main">
+
+  <!-- TOPBAR -->
+  <div id="topbar">
+    <div id="brand">Cria<span>-</span>ativos</div>
+    <div style="width:1px;height:14px;background:var(--b1)"></div>
+    <button id="wf-btn" onclick="toggleWfDrop()">
+      <span style="font-size:9px">▼</span>
+      <span id="wf-name" style="font-weight:500;color:var(--t1)">Workflow 1</span>
+    </button>
+    <div id="wf-drop" id="wf-drop">
+      <div id="wf-list"></div>
+      <div class="wf-new" onclick="newWorkflow()"><span>+</span> Novo workflow</div>
+    </div>
+    <div id="tb-right">
+      <button class="tb-btn" onclick="clearConns()">Limpar linhas</button>
+      <button class="tb-btn" onclick="autoConnect()">Auto-conectar</button>
+      <button class="tb-btn hi" onclick="genAll()">⚡ Gerar todos</button>
+    </div>
+  </div>
+
+  <!-- BOARD VIEW -->
+  <div id="board-view" class="view active" style="position:relative;overflow:hidden">
+    <!-- Lines BEHIND everything -->
+    <svg id="svg-back" style="position:absolute;inset:0;width:100%;height:100%;z-index:1;pointer-events:none;overflow:visible;transform-origin:0 0"></svg>
+    <!-- Canvas with cards, z above svg -->
+    <div id="canvas" style="position:absolute;inset:0;z-index:2;transform-origin:0 0"></div>
+  </div>
+
+  <!-- LOG VIEW -->
+  <div id="log-view" class="view">
+    <div class="log-title">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h10"/></svg>
+      Log de Geração
+      <button class="tb-btn" style="margin-left:auto" onclick="logEntries=[];renderLog()">Limpar</button>
+    </div>
+    <div id="log-entries"></div>
+  </div>
+
+  <!-- GALLERY VIEW -->
+  <div id="gallery-view" class="view">
+    <div class="gv-header">
+      <span class="gv-title">Criativos Gerados</span>
+      <div class="gv-filter">
+        <button class="gf on">Todos</button>
+        <button class="gf" onclick="filterGallery('today',this)">Hoje</button>
+        <button class="gf" onclick="filterGallery('week',this)">Semana</button>
+      </div>
+      <button class="tb-btn hi" style="margin-left:auto" onclick="dlAll()">⬇ Baixar todos</button>
+    </div>
+    <div class="gv-grid" id="gv-grid"></div>
+  </div>
+
+  <!-- LIBRARY VIEW -->
+  <div id="library-view" class="view">
+    <div class="lib-header">
+      <span class="lib-title">Biblioteca de Referências</span>
+      <span style="font-size:11px;color:var(--t4)">Arraste para reordenar • Clique na imagem para fazer upload</span>
+    </div>
+    <div class="lib-grid" id="lib-grid"></div>
+  </div>
+
+  <!-- SETTINGS VIEW -->
+  <div id="settings-view" class="view">
+    <div class="sv-section">
+      <div class="sv-title">APIs de Imagem</div>
+      <div class="sv-row">
+        <div><div class="sv-name">GPT-Image / DALL-E</div><div class="sv-stat ok" id="api-stat">● Configurada</div></div>
+        <button class="sv-edit">Editar</button>
+      </div>
+      <div style="padding:10px 12px;background:var(--bg2);border:1px solid var(--b1);border-radius:8px;margin-bottom:6px">
+        <label class="sv-lbl">API Key OpenAI</label>
+        <input class="sv-input" id="oai-key" type="password" placeholder="sk-...">
+        <button class="sv-save" onclick="saveKey()">Salvar chave</button>
+      </div>
+      <div class="sv-row" style="opacity:.5"><div><div class="sv-name">Stability AI</div><div class="sv-stat">● Não configurada</div></div><button class="sv-edit">Configurar</button></div>
+    </div>
+    <div class="sv-section">
+      <div class="sv-title">Modelo Padrão</div>
+      <select class="sv-input" id="default-model" style="width:auto">
+        <option value="dall-e-3">DALL-E 3</option>
+        <option value="gpt-image-1">GPT-Image-1</option>
+      </select>
+    </div>
+  </div>
+
+</div><!-- /main -->
+</div><!-- /app -->
+
+<!-- ZOOM -->
+<div id="zoom-ctrl">
+  <button class="zb" onclick="doZoom(1.15)">+</button>
+  <div id="zoom-pct">100%</div>
+  <button class="zb" onclick="doZoom(1/1.15)">−</button>
+  <button class="zb" onclick="resetView()" title="Reset">⊙</button>
+</div>
+
+<!-- ADD -->
+<div id="add-wrap">
+  <div id="add-menu">
+    <div class="am-item" onclick="addCard('result');closeAdd()"><div class="am-dot" style="background:#333"></div>Card Resultado</div>
+    <div class="am-item" onclick="addCard('ref');closeAdd()"><div class="am-dot" style="background:#2a2a2a"></div>Referência</div>
+    <div class="am-item" onclick="addCard('copy');closeAdd()"><div class="am-dot" style="background:#222"></div>Copy</div>
+  </div>
+  <button id="add-btn" onclick="document.getElementById('add-menu').classList.toggle('open')">+</button>
+</div>
+
+<!-- TEMP LINE SVG -->
+<svg id="temp-svg" style="position:fixed;inset:0;pointer-events:none;z-index:9999">
+  <line id="temp-line" x1="-1" y1="-1" x2="-1" y2="-1" stroke="#555" stroke-width="1" stroke-dasharray="5,3"/>
+</svg>
+
+<script>
+/* ═══ STATE ═══ */
+let scale=1,panX=200,panY=80;
+let isPan=false,panS={x:0,y:0};
+let dragCard=null,dragOff={x:0,y:0};
+let connFrom=null,connDotEl=null;
+let cards={};let conns=[];let zTop=10;let uid=1;
+let workflows=[{id:'wf1',name:'Workflow 1',cards:{},conns:[],pan:{x:200,y:80},scale:1}];
+let cwf='wf1';
+let logEntries=[];
+let generatedImgs={};
+let libItems=[];
+let libDragIdx=null;
+
+const canvas=document.getElementById('canvas');
+const svgBack=document.getElementById('svg-back');
+const boardWrap=document.getElementById('board-view');
+const tempLine=document.getElementById('temp-line');
+
+/* ═══ TRANSFORM ═══ */
+function applyT(){
+  const t=`translate(${panX}px,${panY}px) scale(${scale})`;
+  canvas.style.transform=t;
+  svgBack.style.transform=t;
+  document.getElementById('zoom-pct').textContent=Math.round(scale*100)+'%';
+}
+function doZoom(f,cx,cy){
+  const r=boardWrap.getBoundingClientRect();
+  const ox=cx!==undefined?cx:r.width/2;
+  const oy=cy!==undefined?cy:r.height/2;
+  const ns=Math.max(.1,Math.min(4,scale*f));
+  panX=ox-(ox-panX)*ns/scale;
+  panY=oy-(oy-panY)*ns/scale;
+  scale=ns;applyT();
+}
+function resetView(){scale=1;panX=200;panY=80;applyT()}
+
+/* ═══ PAN & DRAG ═══ */
+boardWrap.addEventListener('wheel',e=>{
+  e.preventDefault();
+  const r=boardWrap.getBoundingClientRect();
+  doZoom(e.deltaY<0?1.1:.91,e.clientX-r.left,e.clientY-r.top);
+},{passive:false});
+
+boardWrap.addEventListener('mousedown',e=>{
+  const t=e.target;
+  if(t===boardWrap||t===canvas||t===svgBack||t.tagName==='svg'){
+    isPan=true;panS={x:e.clientX-panX,y:e.clientY-panY};boardWrap.style.cursor='grabbing';
+  }
+});
+
+document.addEventListener('mousemove',e=>{
+  if(isPan){panX=e.clientX-panS.x;panY=e.clientY-panS.y;applyT()}
+  if(dragCard){
+    const r=boardWrap.getBoundingClientRect();
+    const cx=(e.clientX-r.left-panX)/scale;
+    const cy=(e.clientY-r.top-panY)/scale;
+    const el=document.getElementById(dragCard);
+    if(el){
+      const nx=cx-dragOff.x,ny=cy-dragOff.y;
+      el.style.left=nx+'px';el.style.top=ny+'px';
+      cards[dragCard].x=nx;cards[dragCard].y=ny;
+      drawLines();
+    }
+  }
+  if(connFrom){
+    const dot=connDotEl.getBoundingClientRect();
+    tempLine.setAttribute('x1',dot.left+dot.width/2);
+    tempLine.setAttribute('y1',dot.top+dot.height/2);
+    tempLine.setAttribute('x2',e.clientX);
+    tempLine.setAttribute('y2',e.clientY);
+  }
+});
+
+document.addEventListener('mouseup',e=>{
+  if(isPan){isPan=false;boardWrap.style.cursor='default'}
+  dragCard=null;
+  if(connFrom){
+    tempLine.setAttribute('x1',-1);tempLine.setAttribute('y1',-1);tempLine.setAttribute('x2',-1);tempLine.setAttribute('y2',-1);
+    const under=document.elementFromPoint(e.clientX,e.clientY);
+    const dot=under&&under.closest('[data-cid]');
+    if(dot&&dot.dataset.cid!==connFrom){
+      addConn(connFrom,dot.dataset.cid);
+    }
+    connFrom=null;connDotEl=null;
+  }
+});
+
+/* ═══ LINES ═══ */
+function cardCenter(id){
+  const el=document.getElementById(id);const c=cards[id];
+  if(!el||!c)return{x:0,y:0};
+  const w=el.offsetWidth,h=el.offsetHeight;
+  return{x:c.x+w/2,y:c.y+h/2};
+}
+function cardRight(id){
+  const el=document.getElementById(id);const c=cards[id];
+  if(!el||!c)return{x:0,y:0};
+  return{x:c.x+el.offsetWidth,y:c.y+el.offsetHeight/2};
+}
+function cardLeft(id){
+  const c=cards[id];const el=document.getElementById(id);
+  if(!el||!c)return{x:0,y:0};
+  return{x:c.x,y:c.y+el.offsetHeight/2};
+}
+
+function drawLines(){
+  svgBack.innerHTML='';
+  conns.forEach(cn=>{
+    const fe=document.getElementById(cn.from);
+    const te=document.getElementById(cn.to);
+    if(!fe||!te)return;
+    const fr=cardRight(cn.from);
+    const to=cardLeft(cn.to);
+    const mx=(fr.x+to.x)/2;
+    const p=document.createElementNS('http://www.w3.org/2000/svg','path');
+    p.setAttribute('d',`M${fr.x},${fr.y} C${mx},${fr.y} ${mx},${to.y} ${to.x},${to.y}`);
+    p.setAttribute('class','conn-path');
+    p.setAttribute('data-conn-id',cn.id);
+    p.style.pointerEvents='stroke';
+    p.addEventListener('dblclick',()=>{conns=conns.filter(x=>x.id!==cn.id);drawLines()});
+    svgBack.appendChild(p);
+  });
+}
+
+function addConn(from,to){
+  if(conns.find(c=>c.from===from&&c.to===to))return;
+  conns.push({from,to,id:'c'+(uid++)});
+  drawLines();
+}
+function clearConns(){if(confirm('Limpar todas as conexões?')){conns=[];drawLines()}}
+function autoConnect(){
+  const ids=Object.keys(cards);
+  const identity=ids.find(id=>cards[id].type==='identity');
+  const results=ids.filter(id=>cards[id].type==='result');
+  const copies=ids.filter(id=>cards[id].type==='copy');
+  const refs=ids.filter(id=>cards[id].type==='ref');
+  if(identity)results.forEach(rid=>addConn(identity,rid));
+  copies.forEach((cid,i)=>{if(results[i])addConn(cid,results[i])});
+  refs.forEach((rid,i)=>{if(results[i])addConn(rid,results[i])});
+  drawLines();
+}
+
+/* ═══ CARD CREATION ═══ */
+function addCard(type,x,y,id,data){
+  const cid=id||type+'_'+(uid++);
+  const r=boardWrap.getBoundingClientRect();
+  const cx=x!==undefined?x:(-panX/scale+(r.width/scale)*0.4+Math.random()*120);
+  const cy=y!==undefined?y:(-panY/scale+(r.height/scale)*0.4+Math.random()*80);
+  cards[cid]={type,x:cx,y:cy,data:data||{}};
+  const el=document.createElement('div');
+  el.id=cid;
+  el.innerHTML=buildHTML(type,cid,data||{});
+  el.style.left=cx+'px';el.style.top=cy+'px';
+  el.style.position='absolute';
+  canvas.appendChild(el);
+  bindCard(el,cid,type);
+  setTimeout(()=>drawLines(),50);
+  return cid;
+}
+
+function buildHTML(type,id,data){
+  const connDot=(side)=>`<div class="${side==='left'?'rc-dot':'ref-conn-dot'}" data-cid="${id}" style="top:50%"></div>`;
+  
+  if(type==='identity')return`
+<div id="identity-card" style="position:absolute;left:0;top:0;width:220px;background:linear-gradient(160deg,#141414,#111);border:1px solid #303030;border-radius:14px;z-index:20;user-select:none">
+  <div style="padding:12px 14px 8px;display:flex;align-items:center;justify-content:space-between">
+    <span style="font-family:'Syne',sans-serif;font-size:9px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--t3)">Identidade Visual</span>
+  </div>
+
+  <div style="padding:8px 14px;border-top:1px solid var(--b1)">
+    <div style="font-size:9px;font-family:'DM Mono',monospace;color:var(--t4);letter-spacing:.1em;text-transform:uppercase;margin-bottom:7px">Logotipo</div>
+    <label style="cursor:pointer;display:block">
+      <div id="id-logo-${id}" style="width:100%;height:60px;border:1px dashed var(--b2);border-radius:8px;display:flex;align-items:center;justify-content:center;background:var(--bg);overflow:hidden;transition:all .15s">
+        <div style="display:flex;flex-direction:column;align-items:center;gap:3px">
+          <span style="font-size:14px;color:var(--t4)">⊕</span>
+          <span style="font-size:9px;color:var(--t4)">Upload logo</span>
+        </div>
+      </div>
+      <input type="file" accept="image/*" style="display:none" onchange="handleLogo(event,'${id}')">
+    </label>
+  </div>
+
+  <div style="padding:8px 14px;border-top:1px solid var(--b1)">
+    <div style="font-size:9px;font-family:'DM Mono',monospace;color:var(--t4);letter-spacing:.1em;text-transform:uppercase;margin-bottom:7px">Fontes</div>
+    <div id="id-fonts-${id}" style="display:flex;gap:4px;flex-wrap:wrap;align-items:center">
+      <div style="padding:3px 7px;border-radius:5px;border:1px solid var(--b2);background:var(--bg3);font-size:10px;color:var(--t2);cursor:pointer">Syne</div>
+      <div style="padding:3px 7px;border-radius:5px;border:1px solid var(--b2);background:var(--bg3);font-size:10px;color:var(--t2);cursor:pointer">DM Mono</div>
+      <div style="padding:3px 7px;border-radius:5px;border:1px dashed var(--b2);font-size:10px;color:var(--t4);cursor:pointer" onclick="addFont('${id}')">+ fonte</div>
+    </div>
+  </div>
+
+  <div style="padding:8px 14px;border-top:1px solid var(--b1)">
+    <div style="font-size:9px;font-family:'DM Mono',monospace;color:var(--t4);letter-spacing:.1em;text-transform:uppercase;margin-bottom:7px">Cores</div>
+    <div id="id-colors-${id}" style="display:flex;gap:4px;flex-wrap:wrap;align-items:center">
+      <div style="width:22px;height:22px;border-radius:5px;background:#e0e0e0;border:1px solid var(--b3);cursor:pointer" title="#e0e0e0"></div>
+      <div style="width:22px;height:22px;border-radius:5px;background:#1a1a1a;border:1px solid var(--b3);cursor:pointer" title="#1a1a1a"></div>
+      <div style="width:22px;height:22px;border-radius:5px;background:#666;border:1px solid var(--b3);cursor:pointer" title="#666666"></div>
+      <div onclick="addColor('${id}')" style="width:22px;height:22px;border-radius:5px;border:1px dashed var(--b2);display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--t4);font-size:14px;transition:all .15s">+</div>
+    </div>
+  </div>
+
+  <div style="padding:8px 14px;border-top:1px solid var(--b1)">
+    <div style="font-size:9px;font-family:'DM Mono',monospace;color:var(--t4);letter-spacing:.1em;text-transform:uppercase;margin-bottom:7px">Referências visuais</div>
+    <div id="id-refs-${id}" style="display:flex;flex-direction:column;gap:4px"></div>
+    <label style="cursor:pointer;display:block;margin-top:5px">
+      <div style="padding:5px 8px;border:1px dashed var(--b2);border-radius:6px;display:flex;align-items:center;gap:5px;font-size:10px;color:var(--t4);transition:all .15s" onmouseover="this.style.borderColor='var(--b3)'" onmouseout="this.style.borderColor='var(--b2)'">
+        <span style="font-size:13px">⊕</span> Adicionar imagem de ref.
+      </div>
+      <input type="file" accept="image/*" style="display:none" onchange="handleIdRef(event,'${id}')">
+    </label>
+  </div>
+
+  <div style="padding:8px 14px;border-top:1px solid var(--b1)">
+    <div style="font-size:9px;font-family:'DM Mono',monospace;color:var(--t4);letter-spacing:.1em;text-transform:uppercase;margin-bottom:5px">Prompt base</div>
+    <textarea style="width:100%;border:none;background:transparent;font-size:10px;color:var(--t2);font-family:'DM Mono',monospace;line-height:1.65;resize:none;outline:none;min-height:70px" placeholder="Instruções gerais de identidade visual..."
+    >Seguir exatamente a paleta de cores e estilo visual da marca. Usar a logo fornecida. Manter coerência com as referências de estilo.</textarea>
+  </div>
+
+  <div id="id-conn-${id}" style="position:absolute;right:-6px;top:50%;transform:translateY(-50%);width:11px;height:11px;border-radius:50%;background:var(--b3);border:2px solid #080808;cursor:crosshair;z-index:30;transition:background .15s" data-cid="${id}"></div>
+</div>`;
+
+  if(type==='result')return`
+<div class="card-result" id="${id}" style="z-index:10">
+  <div class="cr-handle" data-drag="${id}">
+    <span class="cr-label">Resultado</span>
+    <span class="cr-model" id="cr-model-${id}">DALL-E 3</span>
+  </div>
+  <div class="cr-body">
+    <div class="cr-preview" id="cr-prev-${id}">
+      <div class="cr-empty">
+        <div class="cr-empty-icon">⊡</div>
+        <div class="cr-empty-txt">Aguardando geração</div>
+      </div>
+    </div>
+    <div class="cr-controls">
+      <select class="cr-sel" id="cr-q-${id}"><option>1</option><option>2</option><option>3</option><option>4</option></select>
+      <select class="cr-sel" id="cr-f-${id}">
+        <option value="1024x1024">Quadrado</option>
+        <option value="1080x1920">Stories</option>
+        <option value="1200x628">Feed FB</option>
+        <option value="1080x1080">Feed IG</option>
+        <option value="1920x1080">Banner</option>
+      </select>
+      <select class="cr-sel" id="cr-ql-${id}">
+        <option value="standard">1K</option>
+        <option value="hd">2K</option>
+      </select>
+    </div>
+    <button class="cr-gen" id="cr-gen-${id}" onclick="genCard('${id}')">⚡ GERAR</button>
+    <div class="cr-post" id="cr-post-${id}">
+      <button class="cr-pbtn" onclick="dlCard('${id}')">⬇ Baixar</button>
+      <button class="cr-pbtn" onclick="alterCard('${id}')">✎ Alterar</button>
+    </div>
+    <div class="alter-box" id="alter-${id}">
+      <textarea class="alter-ta" rows="2" placeholder="Instruções de ajuste..."></textarea>
+      <button class="cr-gen" style="margin-top:4px" onclick="genCard('${id}',true)">⚡ REGERAR</button>
+    </div>
+  </div>
+  <div class="rc-dot" data-cid="${id}" style="top:50%"></div>
+</div>`;
+
+  if(type==='ref')return`
+<div class="card-ref" id="${id}">
+  <div class="ref-handle" data-drag="${id}">
+    <span class="ref-label">Referência</span>
+  </div>
+  <div class="ref-body">
+    <label style="cursor:pointer;display:block">
+      <div id="ref-up-${id}" class="ref-upload">
+        <span style="font-size:16px;color:var(--t4)">⊕</span>
+        <span style="font-size:9px;color:var(--t4)">Upload imagem</span>
+      </div>
+      <input type="file" accept="image/*" style="display:none" onchange="handleRef(event,'${id}')">
+    </label>
+  </div>
+  <div class="ref-conn-dot" data-cid="${id}" style="top:50%"></div>
+</div>`;
+
+  if(type==='copy')return`
+<div class="card-copy" id="${id}">
+  <div class="copy-handle" data-drag="${id}">
+    <span class="copy-lbl">Copy</span>
+    <span class="copy-num" id="copy-num-${id}">#</span>
+  </div>
+  <div class="copy-body">
+    <textarea class="copy-ta" id="copy-ta-${id}" placeholder="Texto do anúncio..." rows="4" oninput="cards['${id}'].data.copy=this.value"></textarea>
+  </div>
+  <div class="copy-conn-dot" data-cid="${id}" style="top:50%"></div>
+</div>`;
+
+  return'';
+}
+
+function bindCard(el,id,type){
+  // drag on handle
+  el.querySelectorAll('[data-drag]').forEach(h=>{
+    h.addEventListener('mousedown',e=>{
+      if(e.button!==0)return;
+      e.stopPropagation();
+      dragCard=id;
+      const r=boardWrap.getBoundingClientRect();
+      const cx=(e.clientX-r.left-panX)/scale;
+      const cy=(e.clientY-r.top-panY)/scale;
+      dragOff={x:cx-cards[id].x,y:cy-cards[id].y};
+      el.style.zIndex=zTop++;
+    });
+  });
+  // connect dots
+  el.querySelectorAll('[data-cid]').forEach(dot=>{
+    dot.addEventListener('mousedown',e=>{
+      if(e.button!==0)return;
+      e.stopPropagation();
+      connFrom=id;connDotEl=dot;
+    });
+  });
+  // context: remove
+  el.addEventListener('contextmenu',e=>{
+    e.preventDefault();
+    if(type==='identity')return;
+    if(confirm('Remover card?')){
+      el.remove();delete cards[id];
+      conns=conns.filter(c=>c.from!==id&&c.to!==id);
+      drawLines();
+    }
+  });
+}
+
+/* ═══ HANDLERS ═══ */
+function handleLogo(e,id){
+  const f=e.target.files[0];if(!f)return;
+  const url=URL.createObjectURL(f);
+  const d=document.getElementById('id-logo-'+id);
+  if(d)d.innerHTML=`<img src="${url}" style="max-height:56px;max-width:100%;object-fit:contain;padding:4px">`;
+  cards[id].data.logo=url;
+}
+function handleIdRef(e,id){
+  const f=e.target.files[0];if(!f)return;
+  const url=URL.createObjectURL(f);
+  const name=f.name.replace(/\.[^.]+$/,'');
+  const list=document.getElementById('id-refs-'+id);
+  if(list){
+    const item=document.createElement('div');
+    item.style.cssText='display:flex;align-items:center;gap:6px;padding:4px 6px;background:var(--bg3);border-radius:6px;border:1px solid var(--b1)';
+    item.innerHTML=`<img src="${url}" style="width:28px;height:28px;border-radius:4px;object-fit:cover;background:var(--bg4)"><span style="font-size:10px;color:var(--t2);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${name}</span><button onclick="this.parentNode.remove()" style="width:16px;height:16px;border:none;background:transparent;color:var(--t4);cursor:pointer;font-size:12px;border-radius:3px">×</button>`;
+    list.appendChild(item);
+    if(!cards[id].data.idRefs)cards[id].data.idRefs=[];
+    cards[id].data.idRefs.push({url,name});
+  }
+}
+function handleRef(e,id){
+  const f=e.target.files[0];if(!f)return;
+  const url=URL.createObjectURL(f);
+  const d=document.getElementById('ref-up-'+id);
+  if(d)d.innerHTML=`<img src="${url}" class="ref-upload-img">`;
+  cards[id].data.refUrl=url;
+}
+function addFont(id){
+  const name=prompt('Nome da fonte:');if(!name)return;
+  const cont=document.getElementById('id-fonts-'+id);
+  const chip=document.createElement('div');
+  chip.style.cssText='padding:3px 7px;border-radius:5px;border:1px solid var(--b2);background:var(--bg3);font-size:10px;color:var(--t2);cursor:pointer';
+  chip.textContent=name;chip.title=name;
+  cont.insertBefore(chip,cont.lastElementChild);
+}
+function addColor(id){
+  const inp=document.createElement('input');inp.type='color';inp.value='#ffffff';
+  inp.style.cssText='position:fixed;top:-999px;left:-999px;opacity:0';
+  document.body.appendChild(inp);
+  inp.addEventListener('change',()=>{
+    const cont=document.getElementById('id-colors-'+id);
+    const sw=document.createElement('div');
+    sw.style.cssText=`width:22px;height:22px;border-radius:5px;background:${inp.value};border:1px solid var(--b3);cursor:pointer`;
+    sw.title=inp.value;
+    cont.insertBefore(sw,cont.lastElementChild);
+    inp.remove();
+  });
+  inp.click();
+}
+
+/* ═══ PROMPT & GENERATION ═══ */
+function buildPrompt(id){
+  const linked=conns.filter(c=>c.to===id).map(c=>cards[c.from]).filter(Boolean);
+  let identity='',copy='',hasRef=false;
+  linked.forEach(src=>{
+    if(src.type==='identity'){identity='Seguir identidade visual da marca. Usar a paleta de cores e estilo fornecidos.'}
+    if(src.type==='copy'&&src.data?.copy)copy=src.data.copy;
+    if(src.type==='ref')hasRef=true;
+  });
+  const fmt=document.getElementById('cr-f-'+id)?.value||'1024x1024';
+  let p=`Crie uma imagem publicitária de alta qualidade para formato ${fmt}.\n\n`;
+  if(identity)p+=`IDENTIDADE: ${identity}\n\n`;
+  if(copy)p+=`TEXTO DO ANÚNCIO: "${copy}"\n\n`;
+  if(hasRef)p+=`Use o estilo visual da imagem de referência fornecida.\n\n`;
+  if(!copy&&!hasRef)p+=`Seja criativo. Crie algo profissional e impactante para marketing digital.\n\n`;
+  const alterTa=document.querySelector(`#alter-${id} .alter-ta`);
+  if(alterTa?.value)p+=`AJUSTES: ${alterTa.value}\n\n`;
+  p+=`Resultado: fotorrealista, profissional, alta qualidade, adequado para redes sociais.`;
+  return p;
+}
+
+async function genCard(id,regen){
+  const key=localStorage.getItem('cs_openai_key')||document.getElementById('oai-key').value;
+  if(!key){alert('Configure a API Key em Configurações.');return}
+  const model=document.getElementById('default-model')?.value||'dall-e-3';
+  const prev=document.getElementById('cr-prev-'+id);
+  const genBtn=document.getElementById('cr-gen-'+id);
+  const prompt=buildPrompt(id);
+  const fmt=document.getElementById('cr-f-'+id)?.value||'1024x1024';
+  const qual=document.getElementById('cr-ql-'+id)?.value||'standard';
+
+  // UI loading
+  if(prev)prev.innerHTML=`<div class="cr-empty"><div style="font-size:20px;color:#444"><span class="spin">↻</span></div><div class="cr-empty-txt">Gerando...</div></div>`;
+  if(genBtn){genBtn.classList.add('busy');genBtn.innerHTML='<span class="spin">↻</span> GERANDO'}
+
+  // Log
+  const logId='log_'+(uid++);
+  logEntries.unshift({id:logId,status:'gen',text:`Card ${id} — ${fmt}`,time:new Date().toLocaleTimeString('pt-BR')});
+  renderLog();
+
+  try{
+    const res=await fetch('https://api.openai.com/v1/images/generations',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+key},
+      body:JSON.stringify({model,prompt,n:1,size:fmt,quality:qual})
+    });
+    const data=await res.json();
+    if(data.error)throw new Error(data.error.message);
+    const imgUrl=data.data[0].url;
+    generatedImgs[id]={url:imgUrl,prompt,ts:Date.now()};
+    if(prev)prev.innerHTML=`<img src="${imgUrl}" style="width:100%;height:100%;object-fit:cover">`;
+    if(genBtn){genBtn.classList.remove('busy');genBtn.innerHTML='⚡ GERAR'}
+    const post=document.getElementById('cr-post-'+id);if(post)post.classList.add('show');
+    // Log update
+    const le=logEntries.find(l=>l.id===logId);if(le){le.status='done';le.text+=` ✓`}
+    renderLog();
+    addToGallery(id,imgUrl);
+  }catch(err){
+    if(prev)prev.innerHTML=`<div class="cr-empty"><span style="font-size:16px">⚠</span><span style="color:#8a4a4a;font-size:9px">${err.message.slice(0,60)}</span></div>`;
+    if(genBtn){genBtn.classList.remove('busy');genBtn.innerHTML='⚡ GERAR'}
+    const le=logEntries.find(l=>l.id===logId);if(le){le.status='err';le.text+=` ✗ ${err.message.slice(0,30)}`}
+    renderLog();
+  }
+}
+
+async function genAll(){
+  const results=Object.keys(cards).filter(id=>cards[id].type==='result');
+  for(const id of results){await genCard(id);await new Promise(r=>setTimeout(r,1500))}
+}
+
+function dlCard(id){
+  const d=generatedImgs[id];if(!d?.url){alert('Nenhuma imagem gerada.');return}
+  const a=document.createElement('a');a.href=d.url;a.download=`criativo_${id}_${Date.now()}.png`;
+  document.body.appendChild(a);a.click();document.body.removeChild(a);
+}
+function dlAll(){Object.keys(generatedImgs).forEach((id,i)=>setTimeout(()=>dlCard(id),i*600))}
+function alterCard(id){document.getElementById('alter-'+id)?.classList.toggle('open')}
+
+/* ═══ LOG ═══ */
+function renderLog(){
+  const cont=document.getElementById('log-entries');
+  if(!logEntries.length){cont.innerHTML='<div class="log-empty"><span style="font-size:24px">◈</span>Nenhuma geração ainda</div>';return}
+  const sc={'waiting':'ls-waiting','gen':'ls-gen','done':'ls-done','err':'ls-err'};
+  cont.innerHTML=logEntries.map(l=>`
+    <div class="log-entry fadein">
+      <div class="log-status ${sc[l.status]||'ls-waiting'}"></div>
+      <div class="log-text">${l.text}</div>
+      <div class="log-time">${l.time}</div>
+    </div>`).join('');
+}
+
+/* ═══ GALLERY ═══ */
+function addToGallery(id,url){
+  const grid=document.getElementById('gv-grid');
+  const date=new Date().toLocaleDateString('pt-BR');
+  const ex=grid.querySelector(`[data-gid="${id}"]`);
+  const html=`<div class="gv-item" data-gid="${id}"><img class="gv-img" src="${url}"><div class="gv-info"><div class="gv-name">Criativo ${id.split('_')[1]||''}</div><div class="gv-date">${date}</div><button class="gv-dl" onclick="dlCard('${id}')">⬇ Baixar</button></div></div>`;
+  if(ex)ex.outerHTML=html;else grid.insertAdjacentHTML('afterbegin',html);
+}
+function filterGallery(period,btn){
+  document.querySelectorAll('.gf').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');
+}
+
+/* ═══ LIBRARY ═══ */
+function renderLib(){
+  const grid=document.getElementById('lib-grid');
+  grid.innerHTML='';
+  libItems.forEach((item,i)=>{
+    const card=document.createElement('div');
+    card.className='lib-card';card.dataset.idx=i;
+    card.draggable=true;
+    card.innerHTML=`
+      <button class="lib-del" onclick="delLibItem(${i})">×</button>
+      ${item.img
+        ?`<img class="lib-card-img" src="${item.img}" alt="ref">`
+        :`<label style="cursor:pointer;display:block"><div class="lib-card-img-empty"><span>⊕</span></div><input type="file" accept="image/*" style="display:none" onchange="libUploadImg(event,${i})"></label>`}
+      <div class="lib-card-body"><textarea class="lib-card-ta" placeholder="Anotação..." rows="2" oninput="libItems[${i}].text=this.value">${item.text||''}</textarea></div>`;
+    card.addEventListener('dragstart',()=>{libDragIdx=i;card.classList.add('dragging-lib')});
+    card.addEventListener('dragend',()=>{card.classList.remove('dragging-lib');libDragIdx=null});
+    card.addEventListener('dragover',e=>{e.preventDefault()});
+    card.addEventListener('drop',e=>{
+      e.preventDefault();
+      if(libDragIdx===null||libDragIdx===i)return;
+      const moved=libItems.splice(libDragIdx,1)[0];
+      libItems.splice(i,0,moved);
+      renderLib();
+    });
+    grid.appendChild(card);
+  });
+  // add card
+  const addCard=document.createElement('div');
+  addCard.className='lib-add-card';addCard.textContent='+';
+  addCard.onclick=()=>{libItems.push({img:'',text:''});renderLib()};
+  grid.appendChild(addCard);
+}
+function libUploadImg(e,idx){
+  const f=e.target.files[0];if(!f)return;
+  libItems[idx].img=URL.createObjectURL(f);
+  renderLib();
+}
+function delLibItem(idx){libItems.splice(idx,1);renderLib()}
+
+/* ═══ WORKFLOWS ═══ */
+function renderWfList(){
+  const list=document.getElementById('wf-list');
+  list.innerHTML=workflows.map(wf=>`
+    <div class="wf-item ${wf.id===cwf?'cur':''}" onclick="switchWf('${wf.id}')">
+      <span>⊞</span><span style="flex:1">${wf.name}</span>
+      <div class="wf-acts">
+        <button class="wa" onclick="event.stopPropagation();renameWf('${wf.id}')">✎</button>
+        <button class="wa" onclick="event.stopPropagation();dupWf('${wf.id}')">⊕</button>
+        <button class="wa" onclick="event.stopPropagation();delWf('${wf.id}')">×</button>
+      </div>
+    </div>`).join('');
+}
+function toggleWfDrop(){
+  const d=document.getElementById('wf-drop');d.classList.toggle('open');renderWfList();
+}
+function saveWf(){
+  const wf=workflows.find(w=>w.id===cwf);
+  if(wf){wf.cards=JSON.parse(JSON.stringify(cards));wf.conns=JSON.parse(JSON.stringify(conns));wf.pan={x:panX,y:panY};wf.scale=scale}
+}
+function loadWf(id){
+  canvas.innerHTML='';svgBack.innerHTML='';cards={};conns=[];
+  const wf=workflows.find(w=>w.id===id);if(!wf)return;
+  panX=wf.pan?.x||200;panY=wf.pan?.y||80;scale=wf.scale||1;applyT();
+  // First create identity card
+  if(wf.cards){
+    Object.entries(wf.cards).forEach(([cid,c])=>{
+      if(c.type==='identity'){addCard('identity',c.x,c.y,cid,c.data)}
+    });
+    Object.entries(wf.cards).forEach(([cid,c])=>{
+      if(c.type!=='identity'){addCard(c.type,c.x,c.y,cid,c.data)}
+    });
+  }
+  conns=(wf.conns||[]).slice();
+  setTimeout(()=>drawLines(),60);
+}
+function switchWf(id){
+  saveWf();cwf=id;loadWf(id);
+  document.getElementById('wf-name').textContent=workflows.find(w=>w.id===id)?.name||'';
+  document.getElementById('wf-drop').classList.remove('open');
+}
+function newWorkflow(){
+  const name=prompt('Nome do workflow:','Workflow '+(workflows.length+1));
+  if(!name)return;
+  const id='wf_'+(uid++);
+  workflows.push({id,name,cards:{},conns:[],pan:{x:200,y:80},scale:1});
+  switchWf(id);
+  document.getElementById('wf-drop').classList.remove('open');
+}
+function renameWf(id){const wf=workflows.find(w=>w.id===id);if(!wf)return;const n=prompt('Novo nome:',wf.name);if(n){wf.name=n;if(id===cwf)document.getElementById('wf-name').textContent=n}renderWfList()}
+function dupWf(id){const wf=workflows.find(w=>w.id===id);if(!wf)return;const nid='wf_'+(uid++);workflows.push({...JSON.parse(JSON.stringify(wf)),id:nid,name:wf.name+' (cópia)'});renderWfList()}
+function delWf(id){if(workflows.length===1){alert('Último workflow.');return}if(!confirm('Remover?'))return;workflows=workflows.filter(w=>w.id!==id);if(cwf===id)switchWf(workflows[0].id);renderWfList()}
+
+/* ═══ NAV ═══ */
+function nav(view,btn){
+  document.querySelectorAll('.sb-btn').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById(view+'-view').classList.add('active');
+  if(view==='log')renderLog();
+  if(view==='library')renderLib();
+}
+
+function closeAdd(){document.getElementById('add-menu').classList.remove('open')}
+document.addEventListener('click',e=>{
+  if(!e.target.closest('#add-wrap'))closeAdd();
+  if(!e.target.closest('#wf-drop')&&!e.target.closest('#wf-btn'))document.getElementById('wf-drop').classList.remove('open');
+});
+
+/* ═══ SETTINGS ═══ */
+function saveKey(){
+  const k=document.getElementById('oai-key').value;
+  localStorage.setItem('cs_openai_key',k);
+  document.getElementById('api-stat').textContent='● Configurada';
+  document.getElementById('api-stat').className='sv-stat ok';
+}
+const sk=localStorage.getItem('cs_openai_key');if(sk){document.getElementById('oai-key').value=sk}
+
+/* ═══ INIT ═══ */
+function initDefault(){
+  applyT();
+  // Identity card (fixed left)
+  const iid=addCard('identity',-160,0);
+
+  // 10 result cards in 2 rows of 5
+  const resultIds=[];
+  for(let i=0;i<10;i++){
+    const col=i%5,row=Math.floor(i/5);
+    const rid=addCard('result',120+col*270,row*360);
+    resultIds.push(rid);
+    // Set copy number label
+    const numEl=document.getElementById('copy-num-'+rid);// not copy, result
+  }
+
+  // 5 reference cards on top
+  const refY=-150;
+  for(let i=0;i<5;i++){
+    const rfid=addCard('ref',120+i*270,refY);
+    // auto connect to result below
+    setTimeout(()=>{addConn(rfid,resultIds[i]);drawLines()},80);
+  }
+
+  // 5 copy cards on bottom
+  const copyY=760;
+  for(let i=0;i<5;i++){
+    const cpid=addCard('copy',120+i*270,copyY);
+    const numEl=document.getElementById('copy-num-'+cpid);
+    if(numEl)numEl.textContent='#'+(i+1);
+    setTimeout(()=>{addConn(cpid,resultIds[i]);drawLines()},80);
+  }
+
+  // Connect identity to all results
+  setTimeout(()=>{
+    resultIds.forEach(rid=>addConn(iid,rid));
+    drawLines();
+  },100);
+
+  // Seed library
+  libItems=[
+    {img:'',text:'Pose: pessoa olhando para câmera'},
+    {img:'',text:'Referência: flat lay produto'},
+    {img:'',text:'Estilo: minimalista branco'},
+    {img:'',text:'Composição: regra dos terços'},
+  ];
+}
+
+initDefault();
+</script>
+</body>
+</html>
