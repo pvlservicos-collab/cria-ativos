@@ -7,7 +7,12 @@
       "Bash(git ls-remote *)",
       "Bash(curl -I https://github.com)",
       "Bash(ipconfig /flushdns)",
-      "PowerShell(ipconfig /flushdns)"
+      "PowerShell(ipconfig /flushdns)",
+      "Bash(git push *)",
+      "Bash(where gh *)",
+      "Bash(where node *)",
+      "PowerShell(Resolve-DnsName github.com 2>&1)",
+      "PowerShell($env:GIT_CURL_VERBOSE = \"1\"; git ls-remote origin HEAD 2>&1 | Select-Object -First 20)"
     ],
     "additionalDirectories": [
       "C:\\Windows\\System32\\drivers\\etc"
