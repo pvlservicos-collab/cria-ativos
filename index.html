@@ -262,7 +262,7 @@
     }
 
     /* IDENTITY CARD */
-    #id-card {
+    .identity-card {
       width: 220px;
       background: linear-gradient(155deg, #141414, #111111);
       border-color: #2a2a2a;
@@ -1586,9 +1586,9 @@
         <div class="gv-hdr">
           <span class="gv-title">Criativos Gerados</span>
           <div style="display:flex;gap:6px">
-            <button class="gf on">Todos</button>
-            <button class="gf">Hoje</button>
-            <button class="gf">Semana</button>
+            <button class="gf on" onclick="filterGallery('all',this)">Todos</button>
+            <button class="gf" onclick="filterGallery('today',this)">Hoje</button>
+            <button class="gf" onclick="filterGallery('week',this)">Semana</button>
           </div>
           <button class="tb-btn hi" style="margin-left:auto" onclick="dlAll()">⬇ Baixar todos</button>
         </div>
@@ -1851,7 +1851,7 @@
       const wrap = document.createElement('div');
       wrap.id = cid;
       wrap.className = 'ca-card ' + (
-        type === 'identity' ? '' :
+        type === 'identity' ? 'identity-card' :
           type === 'result' ? 'cr-card' :
             type === 'ref' ? 'ref-card' :
               'copy-card'
@@ -1974,7 +1974,7 @@
       return `
   <div class="cr-handle" data-handle>
     <span class="cr-lbl">Resultado</span>
-    <span class="cr-model">DALL-E 3</span>
+    <span class="cr-model" id="cr-mdl-${id}">${document.getElementById('def-model')?.value || 'dall-e-3'}</span>
   </div>
   <div class="cr-body">
     <div class="cr-preview" id="cr-prev-${id}">
@@ -1991,9 +1991,9 @@
       </select>
       <select class="cr-sel" id="cr-f-${id}">
         <option value="1024x1024">Quadrado</option>
-        <option value="1080x1920">Stories</option>
-        <option value="1200x628">Feed FB</option>
-        <option value="1920x1080">Banner</option>
+        <option value="1024x1792">Stories</option>
+        <option value="1792x1024">Feed FB</option>
+        <option value="1792x1024">Banner</option>
       </select>
       <select class="cr-sel" id="cr-ql-${id}">
         <option value="standard">1K</option>
@@ -2138,36 +2138,86 @@
     async function genCard(id, isRegen) {
       const key = localStorage.getItem('cs_openai_key') || document.getElementById('oai-key').value;
       if (!key) { alert('Configure sua API Key em Configurações.'); return }
+
       const model = document.getElementById('def-model')?.value || 'dall-e-3';
       const prev = document.getElementById('cr-prev-' + id);
       const genBtn = document.getElementById('cr-gen-' + id);
       const prompt = buildPrompt(id);
-      const fmt = document.getElementById('cr-f-' + id)?.value || '1024x1024';
+      const fmtRaw = document.getElementById('cr-f-' + id)?.value || '1024x1024';
+
+      // gpt-image-1 uses different size values
+      const sizeRemap = { 'gpt-image-1': { '1024x1792': '1024x1536', '1792x1024': '1536x1024' } };
+      const fmt = (model === 'gpt-image-1' && sizeRemap['gpt-image-1'][fmtRaw]) ? sizeRemap['gpt-image-1'][fmtRaw] : fmtRaw;
+
       const qual = document.getElementById('cr-ql-' + id)?.value || 'standard';
+      // gpt-image-1 uses low/medium/high instead of standard/hd
+      const apiQuality = model === 'gpt-image-1' ? (qual === 'hd' ? 'high' : 'medium') : qual;
 
       if (prev) prev.innerHTML = `<div class="cr-empty-wrap"><div class="cr-empty-icon"><span class="spin" style="font-size:20px">↻</span></div><div class="cr-empty-txt">Gerando...</div></div>`;
       if (genBtn) { genBtn.classList.add('busy'); genBtn.innerHTML = '<span class="spin">↻</span> GERANDO' }
 
       const logId = 'log_' + uid();
-      logEntries.unshift({ id: logId, status: 'gen', text: `${id} — ${fmt}`, time: new Date().toLocaleTimeString('pt-BR') });
+      logEntries.unshift({ id: logId, status: 'gen', text: `${id} — ${fmtRaw}`, time: new Date().toLocaleTimeString('pt-BR') });
       renderLog();
 
       try {
-        const res = await fetch('https://api.openai.com/v1/images/generations', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + key },
-          body: JSON.stringify({ model, prompt, n: 1, size: fmt, quality: qual })
-        });
-        const data = await res.json();
-        if (data.error) throw new Error(data.error.message);
-        const imgUrl = data.data[0].url;
-        genImgs[id] = { url: imgUrl, prompt, ts: Date.now() };
-        if (prev) prev.innerHTML = `<img src="${imgUrl}">`;
+        let imgSrc = null;
+
+        // Check for connected reference image
+        const linked = conns.filter(c => c.to === id).map(c => cards[c.from]).filter(Boolean);
+        const refCard = linked.find(src => src.type === 'ref' && src.data?.refUrl);
+
+        if (model === 'gpt-image-1' && refCard) {
+          // Send reference image via /edits endpoint (gpt-image-1 only)
+          const dataUrl = refCard.data.refUrl;
+          const base64 = dataUrl.split(',')[1];
+          const mime = dataUrl.split(';')[0].split(':')[1] || 'image/png';
+          const bytes = atob(base64);
+          const arr = new Uint8Array(bytes.length);
+          for (let i = 0; i < bytes.length; i++) arr[i] = bytes.charCodeAt(i);
+          const refBlob = new Blob([arr], { type: mime });
+
+          const fd = new FormData();
+          fd.append('image', refBlob, 'reference.png');
+          fd.append('prompt', prompt);
+          fd.append('model', 'gpt-image-1');
+          fd.append('n', '1');
+          fd.append('size', fmt);
+          fd.append('quality', apiQuality);
+
+          const res = await fetch('https://api.openai.com/v1/images/edits', {
+            method: 'POST',
+            headers: { 'Authorization': 'Bearer ' + key },
+            body: fd
+          });
+          const data = await res.json();
+          if (data.error) throw new Error(data.error.message);
+          imgSrc = data.data[0].b64_json
+            ? 'data:image/png;base64,' + data.data[0].b64_json
+            : data.data[0].url;
+        } else {
+          // Standard text-to-image generation
+          const body = { model, prompt, n: 1, size: fmt, quality: apiQuality, response_format: 'b64_json' };
+          const res = await fetch('https://api.openai.com/v1/images/generations', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + key },
+            body: JSON.stringify(body)
+          });
+          const data = await res.json();
+          if (data.error) throw new Error(data.error.message);
+          imgSrc = data.data[0].b64_json
+            ? 'data:image/png;base64,' + data.data[0].b64_json
+            : data.data[0].url;
+        }
+
+        genImgs[id] = { url: imgSrc, prompt, ts: Date.now() };
+        if (prev) prev.innerHTML = `<img src="${imgSrc}">`;
         if (genBtn) { genBtn.classList.remove('busy'); genBtn.innerHTML = '⚡ GERAR' }
         document.getElementById('cr-post-' + id)?.classList.add('show');
         const le = logEntries.find(l => l.id === logId); if (le) { le.status = 'done'; le.text += ' ✓' }
         renderLog();
-        addToGallery(id, imgUrl);
+        addToGallery(id, imgSrc);
+        saveCurrentWf();
       } catch (err) {
         if (prev) prev.innerHTML = `<div class="cr-empty-wrap"><span style="font-size:16px">⚠</span><span style="color:#8a5a5a;font-size:9px">${err.message.slice(0, 55)}</span></div>`;
         if (genBtn) { genBtn.classList.remove('busy'); genBtn.innerHTML = '⚡ GERAR' }
@@ -2306,8 +2356,14 @@
         localStorage.setItem('CA_workflows', JSON.stringify(workflows));
         localStorage.setItem('CA_current_wf', currentWf);
         localStorage.setItem('CA_libItems', JSON.stringify(libItems));
-        localStorage.setItem('CA_genImgs', JSON.stringify(genImgs));
-      } catch (e) {}
+        try {
+          localStorage.setItem('CA_genImgs', JSON.stringify(genImgs));
+        } catch (e) {
+          console.warn('Imagens geradas não salvas (armazenamento cheio). Faça download antes de fechar.');
+        }
+      } catch (e) {
+        console.warn('Falha ao salvar estado:', e);
+      }
     }
     function loadWf(id) {
       canvas.innerHTML = ''; svgBack.innerHTML = ''; cards = {}; conns = [];
@@ -2371,6 +2427,27 @@
         document.getElementById('wf-drop').classList.remove('open');
     });
 
+    /* ═══ GALLERY FILTER ═══ */
+    function filterGallery(filter, btn) {
+      document.querySelectorAll('.gf').forEach(b => b.classList.remove('on'));
+      if (btn) btn.classList.add('on');
+      const grid = document.getElementById('gv-grid'); if (!grid) return;
+      const today = new Date().toLocaleDateString('pt-BR');
+      const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+      grid.querySelectorAll('.gv-card').forEach(card => {
+        if (filter === 'all') { card.style.display = ''; return; }
+        const dateText = card.querySelector('.gv-date')?.textContent || '';
+        if (filter === 'today') {
+          card.style.display = dateText === today ? '' : 'none';
+        } else {
+          const parts = dateText.split('/');
+          if (parts.length < 3) { card.style.display = 'none'; return; }
+          const cardDate = new Date(+parts[2], +parts[1] - 1, +parts[0]);
+          card.style.display = cardDate >= weekAgo ? '' : 'none';
+        }
+      });
+    }
+
     /* ═══ SETTINGS ═══ */
     function saveKey() {
       const k = document.getElementById('oai-key').value;
@@ -2379,7 +2456,11 @@
       if (stat) { stat.textContent = '● Configurada'; stat.className = 'sv-stat ok' }
     }
     const sk = localStorage.getItem('cs_openai_key');
-    if (sk && document.getElementById('oai-key')) document.getElementById('oai-key').value = sk;
+    if (sk && document.getElementById('oai-key')) {
+      document.getElementById('oai-key').value = sk;
+      const stat = document.getElementById('api-stat');
+      if (stat) { stat.textContent = '● Configurada'; stat.className = 'sv-stat ok' }
+    }
 
     /* ═══ INIT ═══ */
     function initDefault() {
