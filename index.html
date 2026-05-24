@@ -1935,10 +1935,11 @@
       if (conns.find(c => c.from === from && c.to === to)) return;
       conns.push({ from, to, id: 'c' + uid() });
       drawLines();
+      saveCurrentWf();
     }
 
     function clearConns() {
-      if (confirm('Limpar todas as conexões?')) { conns = []; drawLines() }
+      if (confirm('Limpar todas as conexões?')) { conns = []; drawLines(); saveCurrentWf(); }
     }
 
     function autoConnect() {
@@ -1951,6 +1952,7 @@
       copies.forEach((cid, i) => { if (results[i]) addConn(cid, results[i]) });
       refs.forEach((rfid, i) => { if (results[i]) addConn(rfid, results[i]) });
       drawLines();
+      saveCurrentWf();
     }
 
     /* ═══ CARD CREATION ═══ */
@@ -2043,9 +2045,13 @@
             delete cards[cid];
             conns = conns.filter(c => c.from !== cid && c.to !== cid);
             drawLines();
+            saveCurrentWf();
           }
         });
       }
+
+      // Save after spawning a new card (when user adds from menu, not from loadWf)
+      if (!id) saveCurrentWf();
 
       setTimeout(() => drawLines(), 30);
       return cid;
@@ -2061,7 +2067,7 @@
     }
 
     function buildIdentity(id, data) {
-      const refsHtml = (data.idRefs || []).map(r => `<div class="id-ref-item"><img src="${r.url}" class="id-ref-img"><span class="id-ref-name">${r.name}</span><button class="id-ref-del" onclick="this.closest('.id-ref-item').remove()">×</button></div>`).join('');
+      const refsHtml = (data.idRefs || []).map((r, ri) => `<div class="id-ref-item"><img src="${r.url}" class="id-ref-img"><span class="id-ref-name">${r.name}</span><button class="id-ref-del" onclick="this.closest('.id-ref-item').remove();if(cards['${id}']){cards['${id}'].data.idRefs.splice(${ri},1);saveCurrentWf()}">×</button></div>`).join('');
       const tog = data.idToggles || {};
       const on = k => tog[k] !== false;
       const tgl = k => `<div class="id-toggle${on(k) ? ' on' : ''}" onclick="toggleIdSection('${id}','${k}',this)" title="${on(k) ? 'Enviando para IA' : 'Desativado'}"></div>`;
