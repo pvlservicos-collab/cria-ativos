@@ -1629,6 +1629,9 @@
         <div id="tb-right">
           <button class="tb-btn" onclick="clearConns()">Limpar linhas</button>
           <button class="tb-btn" onclick="autoConnect()">Auto-conectar</button>
+          <span id="sync-dot" title="Sincronizado" style="display:inline-flex;align-items:center;gap:4px;font-size:10px;color:var(--t4);padding:0 6px">
+            <span id="sync-icon" style="font-size:8px">●</span><span id="sync-label">cloud</span>
+          </span>
           <button class="tb-btn hi" id="gen-all-btn" onclick="genAll()">⚡ Gerar todos</button>
         </div>
       </div>
@@ -2626,6 +2629,49 @@
     function toggleWfDrop() {
       const d = document.getElementById('wf-drop'); d.classList.toggle('open'); renderWfList();
     }
+    /* ═══ CLOUD SYNC ═══ */
+    let _syncTimer = null;
+    function setSyncStatus(state) {
+      const icon = document.getElementById('sync-icon');
+      const label = document.getElementById('sync-label');
+      if (!icon) return;
+      if (state === 'saving')  { icon.style.color = '#a0a060'; label.textContent = 'salvando…'; }
+      else if (state === 'ok') { icon.style.color = '#60a060'; label.textContent = 'cloud'; }
+      else if (state === 'err'){ icon.style.color = '#c06060'; label.textContent = 'sem cloud'; }
+      else                     { icon.style.color = 'var(--t4)'; label.textContent = 'cloud'; }
+    }
+    function cloudPush() {
+      clearTimeout(_syncTimer);
+      _syncTimer = setTimeout(async () => {
+        setSyncStatus('saving');
+        try {
+          const payload = JSON.stringify({
+            workflows, currentWf, libItems,
+            ts: Date.now()
+          });
+          const r = await fetch('/api/sync', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: payload,
+          });
+          setSyncStatus(r.ok ? 'ok' : 'err');
+        } catch (e) {
+          setSyncStatus('err');
+        }
+      }, 1500);
+    }
+    async function cloudLoad() {
+      try {
+        const r = await fetch('/api/sync');
+        if (!r.ok) return null;
+        const data = await r.json();
+        if (!data || !data.workflows) return null;
+        return data;
+      } catch (e) {
+        return null;
+      }
+    }
+
     function saveCurrentWf() {
       const wf = workflows.find(w => w.id === currentWf);
       if (wf) {
@@ -2641,10 +2687,12 @@
         localStorage.setItem('CA_workflows', JSON.stringify(workflows));
         localStorage.setItem('CA_current_wf', currentWf);
         localStorage.setItem('CA_libItems', JSON.stringify(libItems));
+        localStorage.setItem('CA_ts', String(Date.now()));
         // genImgs (base64) kept in memory only — too large for localStorage
       } catch (e) {
         console.warn('Falha ao salvar estado:', e);
       }
+      cloudPush();
     }
     function loadWf(id) {
       canvas.innerHTML = ''; svgBack.innerHTML = ''; cards = {}; conns = [];
@@ -2744,8 +2792,30 @@
     }
 
     /* ═══ INIT ═══ */
-    function initDefault() {
-      // Restore state if available
+    function applyState(data) {
+      if (data.workflows) workflows = data.workflows;
+      if (data.libItems) libItems = data.libItems;
+      const cwf = data.currentWf || workflows[0]?.id || 'wf1';
+      currentWf = cwf;
+      loadWf(cwf);
+      document.getElementById('wf-name').textContent = workflows.find(w => w.id === cwf)?.name || '';
+      renderWfList();
+      renderLib();
+    }
+    async function initDefault() {
+      // Try cloud first, then localStorage, then default layout
+      const localTs = parseInt(localStorage.getItem('CA_ts') || '0');
+
+      const cloud = await cloudLoad();
+      if (cloud && cloud.workflows && (cloud.ts || 0) >= localTs) {
+        // Cloud state is newer or same — use it
+        localStorage.setItem('CA_ts', String(cloud.ts || Date.now()));
+        applyState(cloud);
+        setSyncStatus('ok');
+        return;
+      }
+
+      // Fall back to localStorage
       try {
         const savedWfs = localStorage.getItem('CA_workflows');
         const savedLib = localStorage.getItem('CA_libItems');
@@ -2760,6 +2830,7 @@
           document.getElementById('wf-name').textContent = workflows.find(w => w.id === cwf)?.name || '';
           renderWfList();
           renderLib();
+          setSyncStatus(cloud === null ? 'err' : 'ok');
           return;
         }
       } catch (e) {}
