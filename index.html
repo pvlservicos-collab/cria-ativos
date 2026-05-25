@@ -472,11 +472,11 @@
     /* connect dot on right edge */
     .id-dot {
       position: absolute;
-      right: -6px;
+      right: -7px;
       top: 50%;
       transform: translateY(-50%);
-      width: 11px;
-      height: 11px;
+      width: 14px;
+      height: 14px;
       border-radius: 50%;
       background: var(--b3);
       border: 2px solid #080808;
@@ -688,11 +688,11 @@
     /* left connect dot */
     .cr-dot-left {
       position: absolute;
-      left: -6px;
+      left: -7px;
       top: 50%;
       transform: translateY(-50%);
-      width: 10px;
-      height: 10px;
+      width: 14px;
+      height: 14px;
       border-radius: 50%;
       background: var(--b2);
       border: 2px solid #080808;
@@ -765,11 +765,11 @@
 
     .ref-dot {
       position: absolute;
-      right: -6px;
+      right: -7px;
       top: 50%;
       transform: translateY(-50%);
-      width: 10px;
-      height: 10px;
+      width: 14px;
+      height: 14px;
       border-radius: 50%;
       background: var(--b2);
       border: 2px solid #080808;
@@ -867,11 +867,11 @@
 
     .copy-dot {
       position: absolute;
-      right: -6px;
+      right: -7px;
       top: 50%;
       transform: translateY(-50%);
-      width: 10px;
-      height: 10px;
+      width: 14px;
+      height: 14px;
       border-radius: 50%;
       background: var(--b2);
       border: 2px solid #080808;
@@ -885,15 +885,58 @@
     }
 
     /* CONNECTIONS */
+    .conn-hit {
+      fill: none;
+      stroke: transparent;
+      stroke-width: 14;
+      cursor: pointer;
+      pointer-events: stroke
+    }
+
     .conn-path {
       fill: none;
       stroke: var(--line-col);
       stroke-width: 1.1;
+      pointer-events: none;
+      transition: stroke .15s
+    }
+
+    .conn-group:hover .conn-path {
+      stroke: rgba(150,150,150,.5)
+    }
+
+    .conn-del {
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .15s;
       cursor: pointer
     }
 
-    .conn-path:hover {
-      stroke: rgba(150, 150, 150, .5)
+    .conn-group:hover .conn-del {
+      opacity: 1;
+      pointer-events: all
+    }
+
+    .conn-del-bg {
+      fill: #1e1e1e;
+      stroke: var(--b3);
+      stroke-width: 1.5;
+      transition: fill .1s, stroke .1s
+    }
+
+    .conn-del-bg:hover {
+      fill: #2a1a1a;
+      stroke: #c08080
+    }
+
+    .conn-del-x {
+      fill: var(--t3);
+      font-size: 12px;
+      text-anchor: middle;
+      dominant-baseline: central;
+      pointer-events: none;
+      font-family: sans-serif;
+      user-select: none
     }
 
     /* TEMP LINE */
@@ -1802,7 +1845,7 @@
 
     boardView.addEventListener('mousedown', e => {
       const t = e.target;
-      const isBackground = t === boardView || t === canvas || t === svgBack || t.tagName === 'svg' || t.tagName === 'path' && t.classList.contains('conn-path');
+      const isBackground = !t.closest('.conn-del') && (t === boardView || t === canvas || t === svgBack || t.tagName === 'svg' || t.closest('.conn-group'));
       if (isBackground && !connFrom) {
         isPan = true;
         panStart = { x: e.clientX - panX, y: e.clientY - panY };
@@ -1912,22 +1955,64 @@
 
     function drawLines() {
       svgBack.innerHTML = '';
+      const NS = 'http://www.w3.org/2000/svg';
       conns.forEach(cn => {
         const f = getCardEdges(cn.from);
         const t = getCardEdges(cn.to);
         if (!f || !t) return;
         const x1 = f.rightX, y1 = f.rightY;
-        const x2 = t.leftX, y2 = t.leftY;
+        const x2 = t.leftX,  y2 = t.leftY;
         const mx = (x1 + x2) / 2;
-        const p = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-        p.setAttribute('d', `M${x1},${y1} C${mx},${y1} ${mx},${y2} ${x2},${y2}`);
+        const my = (y1 + y2) / 2;
+        const d  = `M${x1},${y1} C${mx},${y1} ${mx},${y2} ${x2},${y2}`;
+
+        const g = document.createElementNS(NS, 'g');
+        g.setAttribute('class', 'conn-group');
+
+        // Wide invisible stroke for easy hover
+        const hit = document.createElementNS(NS, 'path');
+        hit.setAttribute('d', d);
+        hit.setAttribute('class', 'conn-hit');
+
+        // Visible line
+        const p = document.createElementNS(NS, 'path');
+        p.setAttribute('d', d);
         p.setAttribute('class', 'conn-path');
-        p.style.pointerEvents = 'stroke';
-        p.addEventListener('dblclick', () => {
+
+        // Delete button at midpoint
+        const del = document.createElementNS(NS, 'g');
+        del.setAttribute('class', 'conn-del');
+        del.setAttribute('transform', `translate(${mx},${my})`);
+
+        const hitCircle = document.createElementNS(NS, 'circle');
+        hitCircle.setAttribute('r', '12');
+        hitCircle.setAttribute('fill', 'transparent');
+
+        const bg = document.createElementNS(NS, 'circle');
+        bg.setAttribute('r', '7');
+        bg.setAttribute('class', 'conn-del-bg');
+
+        const txt = document.createElementNS(NS, 'text');
+        txt.setAttribute('class', 'conn-del-x');
+        txt.setAttribute('x', '0');
+        txt.setAttribute('y', '0');
+        txt.textContent = '×';
+
+        del.appendChild(hitCircle);
+        del.appendChild(bg);
+        del.appendChild(txt);
+
+        del.addEventListener('click', e => {
+          e.stopPropagation();
           conns = conns.filter(x => x.id !== cn.id);
           drawLines();
+          saveCurrentWf();
         });
-        svgBack.appendChild(p);
+
+        g.appendChild(hit);
+        g.appendChild(p);
+        g.appendChild(del);
+        svgBack.appendChild(g);
       });
     }
 
