@@ -1,0 +1,763 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Amazon Feed — A floresta ao vivo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..900;1,9..144,400..700&family=Hanken+Grotesk:wght@300..800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#040a07;
+    --bg-2:#06100b;
+    --surface:rgba(11,24,17,.72);
+    --surface-solid:#0c1812;
+    --ink:#eef4ee;
+    --muted:#94ac9d;
+    --faint:#5f7a6b;
+    --emerald:#37e08f;
+    --emerald-deep:#1f7d52;
+    --moss:#123726;
+    --amber:#ffb43a;
+    --scarlet:#ff5d3b;
+    --river:#34cbd9;
+    --line:rgba(255,255,255,.08);
+    --line-strong:rgba(255,255,255,.15);
+    --safe-b:env(safe-area-inset-bottom,0px);
+  }
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+  html{scroll-behavior:smooth}
+  body{
+    background:var(--bg);color:var(--ink);
+    font-family:'Hanken Grotesk',sans-serif;font-weight:380;line-height:1.62;
+    -webkit-font-smoothing:antialiased;overflow-x:hidden;
+  }
+  /* FOREST + MAP atmosphere */
+  body::before{
+    content:"";position:fixed;inset:0;z-index:-3;
+    background:
+      radial-gradient(60% 38% at 82% 4%, rgba(55,224,143,.13), transparent 60%),
+      radial-gradient(50% 34% at 6% 16%, rgba(255,180,58,.09), transparent 55%),
+      radial-gradient(75% 50% at 50% 108%, rgba(52,203,217,.10), transparent 60%),
+      linear-gradient(180deg,var(--bg),#03100a 60%,var(--bg));
+  }
+  body::after{ /* map graticule grid */
+    content:"";position:fixed;inset:0;z-index:-2;pointer-events:none;opacity:.5;
+    background-image:
+      linear-gradient(rgba(55,224,143,.05) 1px,transparent 1px),
+      linear-gradient(90deg,rgba(55,224,143,.05) 1px,transparent 1px),
+      radial-gradient(rgba(255,255,255,.02) 1px,transparent 1px);
+    background-size:54px 54px,54px 54px,3px 3px;
+  }
+  .contour{position:fixed;inset:0;z-index:-1;pointer-events:none;opacity:.16}
+  .contour svg{width:100%;height:100%}
+
+  h1,h2,h3,.display{font-family:'Fraunces',serif;font-weight:560;letter-spacing:-.015em;line-height:1.06}
+  .wrap{max-width:680px;margin:0 auto;padding:0 18px}
+  a{color:inherit;text-decoration:none}
+  .muted{color:var(--muted)}
+  .eyebrow{font-size:11.5px;letter-spacing:.2em;text-transform:uppercase;color:var(--emerald);font-weight:700;display:inline-flex;align-items:center;gap:8px}
+  .eyebrow::before{content:"";width:18px;height:1px;background:var(--emerald);opacity:.7}
+  .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:14px 20px;border-radius:100px;font-weight:700;font-size:15px;cursor:pointer;border:1px solid transparent;transition:.22s;font-family:inherit}
+  .btn-primary{background:var(--amber);color:#1a1205}
+  .btn-primary:active{transform:scale(.97)}
+  .btn-ghost{border-color:var(--line-strong);color:var(--ink);background:rgba(255,255,255,.03)}
+
+  /* NAV */
+  nav{position:sticky;top:0;z-index:60;backdrop-filter:blur(14px);background:rgba(4,10,7,.72);border-bottom:1px solid var(--line)}
+  .nav-in{display:flex;align-items:center;justify-content:space-between;height:58px;padding:0 16px;max-width:1100px;margin:0 auto}
+  .brand{display:flex;align-items:center;gap:9px;font-family:'Fraunces',serif;font-size:18px;font-weight:600}
+  .brand .dot{width:9px;height:9px;border-radius:50%;background:var(--scarlet);box-shadow:0 0 0 4px rgba(255,93,59,.18);animation:blink 1.4s infinite}
+  @keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+  .nav-cta{font-size:13px;font-weight:700;background:var(--amber);color:#1a1205;padding:8px 14px;border-radius:100px}
+  .chips{display:flex;gap:8px;overflow-x:auto;padding:10px 16px;scrollbar-width:none;border-bottom:1px solid var(--line);background:rgba(4,10,7,.5)}
+  .chips::-webkit-scrollbar{display:none}
+  .chips a{flex:0 0 auto;font-size:12.5px;color:var(--muted);background:rgba(255,255,255,.04);border:1px solid var(--line);padding:6px 13px;border-radius:100px}
+
+  section{padding:54px 0;position:relative}
+  .section-head{margin-bottom:30px}
+  .section-head h2{font-size:clamp(27px,7vw,38px);margin:14px 0 0}
+  .section-head p{color:var(--muted);font-size:16px;margin-top:14px}
+
+  /* HERO */
+  .hero{padding:34px 0 12px}
+  .live-chip{display:inline-flex;align-items:center;gap:8px;font-size:11.5px;font-weight:700;letter-spacing:.05em;color:#ffd9c8;background:rgba(255,93,59,.13);border:1px solid rgba(255,93,59,.3);padding:6px 12px;border-radius:100px;margin-bottom:14px}
+  .live-chip .rec{width:7px;height:7px;border-radius:50%;background:var(--scarlet);animation:blink 1.3s infinite}
+  .hero h1{font-size:clamp(40px,12vw,62px);margin:8px 0 0;font-weight:600}
+  .hero h1 .em{font-style:italic;color:var(--amber)}
+  .hero .lead{font-size:17px;color:#cdddd0;margin:16px 0 22px}
+  .hero .lead b{color:var(--ink);font-weight:600}
+  .hero-cta{display:flex;flex-direction:column;gap:10px}
+  .hero-photo{position:relative;border-radius:22px;overflow:hidden;aspect-ratio:4/4.4;border:1px solid var(--line-strong);box-shadow:0 30px 70px -34px #000;margin-top:26px}
+  .hero-photo img{width:100%;height:100%;object-fit:cover;display:block;filter:saturate(1.06) contrast(1.03)}
+  .hero-photo .scrim{position:absolute;inset:0;background:linear-gradient(180deg,transparent 42%,rgba(4,10,7,.9))}
+  .id-tag{position:absolute;left:12px;right:12px;bottom:12px;background:rgba(4,10,7,.6);backdrop-filter:blur(8px);border:1px solid var(--line);border-radius:14px;padding:11px 13px;display:flex;align-items:center;gap:11px}
+  .id-tag .ai{width:32px;height:32px;border-radius:9px;background:linear-gradient(135deg,var(--emerald),var(--river));display:grid;place-items:center;font-size:15px;flex:0 0 auto}
+  .id-tag .nm{font-family:'Fraunces',serif;font-size:15px;font-weight:600;line-height:1.1}
+  .id-tag .sci{font-size:11px;color:var(--faint);font-style:italic}
+  .id-tag .conf{margin-left:auto;text-align:right;font-size:10px;color:var(--muted)}
+  .id-tag .conf b{display:block;font-size:15px;color:var(--emerald);font-family:'Fraunces',serif}
+
+  /* TESE */
+  .tese{background:linear-gradient(180deg,transparent,rgba(18,55,38,.3),transparent)}
+  .tese-quote{font-family:'Fraunces',serif;font-size:clamp(24px,6.6vw,34px);font-weight:500;line-height:1.16;letter-spacing:-.02em}
+  .tese-quote .hl{color:var(--emerald);font-style:italic}
+  .tese-sub{margin-top:20px;color:#c4d4c8;font-size:16px}
+
+  /* cards */
+  .stack{display:flex;flex-direction:column;gap:14px}
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:22px;backdrop-filter:blur(6px);position:relative;overflow:hidden}
+  .card .ic{font-size:22px;width:46px;height:46px;border-radius:12px;display:grid;place-items:center;background:rgba(55,224,143,.12);border:1px solid rgba(55,224,143,.22);margin-bottom:15px}
+  .card h3{font-size:20px;margin-bottom:7px}
+  .card p{color:var(--muted);font-size:14.5px}
+  .step .n{position:absolute;top:14px;right:18px;font-family:'Fraunces',serif;font-style:italic;font-size:34px;color:rgba(255,255,255,.06);font-weight:600}
+
+  /* LIVE MAP (app screen) */
+  .appscreen{position:relative;border-radius:24px;overflow:hidden;border:1px solid var(--line-strong);height:460px;box-shadow:0 30px 70px -34px #000;background:#06140d}
+  .app-top{position:absolute;top:0;left:0;right:0;z-index:5;padding:16px 16px 12px;background:linear-gradient(180deg,rgba(3,8,5,.9),transparent);display:flex;align-items:center;justify-content:space-between}
+  .app-top .ttl{font-family:'Fraunces',serif;font-size:15px;display:flex;align-items:center;gap:7px}
+  .app-top .ttl .d{width:7px;height:7px;border-radius:50%;background:var(--scarlet);animation:blink 1.3s infinite}
+  .app-top .cnt{font-size:11px;color:var(--emerald);font-weight:700;background:rgba(55,224,143,.12);padding:4px 10px;border-radius:20px}
+  .mapc{position:absolute;inset:0;background:radial-gradient(55% 45% at 30% 26%,rgba(31,125,82,.5),transparent 60%),radial-gradient(46% 38% at 76% 72%,rgba(18,55,38,.75),transparent 60%),#06170e}
+  .mapc svg{position:absolute;inset:0;width:100%;height:100%}
+  .pin{position:absolute;width:46px;height:46px;transform:translate(-50%,-50%);opacity:0;animation:pop .6s forwards;cursor:pointer}
+  .pin .ring{position:absolute;inset:-7px;border-radius:50%;border:2px solid var(--emerald);opacity:0;animation:ripple 2.6s infinite}
+  .pin .ph{width:46px;height:46px;border-radius:50%;overflow:hidden;border:2.5px solid var(--emerald);box-shadow:0 4px 14px rgba(0,0,0,.6);background:#11231a}
+  .pin.amber .ph,.pin.amber .ring{border-color:var(--amber)}
+  .pin.scarlet .ph,.pin.scarlet .ring{border-color:var(--scarlet)}
+  .pin.river .ph,.pin.river .ring{border-color:var(--river)}
+  .pin .ph img{width:100%;height:100%;object-fit:cover}
+  .pin.active .ph{transform:scale(1.16);box-shadow:0 0 0 4px rgba(55,224,143,.25),0 6px 16px rgba(0,0,0,.7)}
+  @keyframes pop{0%{opacity:0;transform:translate(-50%,-30%) scale(.4)}70%{transform:translate(-50%,-55%) scale(1.12)}100%{opacity:1;transform:translate(-50%,-50%) scale(1)}}
+  @keyframes ripple{0%{opacity:.7;transform:scale(.6)}80%,100%{opacity:0;transform:scale(1.9)}}
+  .det{position:absolute;left:12px;right:12px;bottom:12px;z-index:5;background:rgba(3,8,5,.84);backdrop-filter:blur(10px);border:1px solid var(--line);border-radius:16px;padding:11px;display:flex;gap:11px;align-items:center;transition:.4s}
+  .det .thumb{width:50px;height:50px;border-radius:11px;overflow:hidden;flex:0 0 auto;background:#11231a}
+  .det .thumb img{width:100%;height:100%;object-fit:cover}
+  .det .info{flex:1;min-width:0}
+  .det .info .new{font-size:9px;letter-spacing:.16em;text-transform:uppercase;color:var(--amber);font-weight:800}
+  .det .info .nm{font-family:'Fraunces',serif;font-size:16px;font-weight:600;line-height:1.1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .det .info .sci{font-size:10.5px;color:var(--faint);font-style:italic}
+  .det .conf{text-align:right;flex:0 0 auto}
+  .det .conf b{font-family:'Fraunces',serif;font-size:18px;color:var(--emerald);display:block}
+  .det .conf span{font-size:8.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em}
+  .feat-list{margin-top:22px;display:flex;flex-direction:column;gap:14px}
+  .feat-list .row{display:flex;gap:13px;align-items:flex-start}
+  .feat-list .b{width:30px;height:30px;border-radius:9px;flex:0 0 auto;display:grid;place-items:center;background:rgba(255,180,58,.13);border:1px solid rgba(255,180,58,.25);font-size:14px}
+  .feat-list .t b{display:block;font-weight:700;margin-bottom:1px;font-size:15px}
+  .feat-list .t span{color:var(--muted);font-size:14px}
+
+  /* GALERIA DE ANIMAIS */
+  .followbar{display:flex;align-items:center;gap:10px;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:11px 14px;margin-bottom:20px;font-size:13.5px}
+  .followbar .b{font-family:'Fraunces',serif;color:var(--emerald);font-size:20px}
+  .animals{display:grid;grid-template-columns:1fr;gap:16px}
+  .acard{background:var(--surface);border:1px solid var(--line);border-radius:20px;overflow:hidden;backdrop-filter:blur(6px)}
+  .acard .media{position:relative;aspect-ratio:16/11;overflow:hidden;background:#0c1812;cursor:pointer}
+  .acard .media img{width:100%;height:100%;object-fit:cover;transition:transform 6s ease;filter:saturate(1.05)}
+  .acard .media:active img{transform:scale(1.05)}
+  .acard .play{position:absolute;inset:0;display:grid;place-items:center}
+  .acard .play .pbtn{width:58px;height:58px;border-radius:50%;background:rgba(4,10,7,.5);backdrop-filter:blur(4px);border:1.5px solid rgba(255,255,255,.5);display:grid;place-items:center;font-size:20px;color:#fff;transition:.2s}
+  .acard .media:active .pbtn{transform:scale(.9)}
+  .acard .livetag{position:absolute;top:11px;left:11px;display:flex;align-items:center;gap:6px;font-size:10px;font-weight:800;letter-spacing:.08em;background:rgba(255,93,59,.85);color:#fff;padding:5px 9px;border-radius:20px}
+  .acard .livetag .d{width:6px;height:6px;border-radius:50%;background:#fff;animation:blink 1.2s infinite}
+  .acard .seen{position:absolute;bottom:11px;right:11px;font-size:10.5px;background:rgba(4,10,7,.6);backdrop-filter:blur(6px);border:1px solid var(--line);padding:5px 9px;border-radius:20px;color:var(--muted)}
+  .acard .body{padding:16px}
+  .acard .name{font-family:'Fraunces',serif;font-size:22px;font-weight:600;display:flex;align-items:center;gap:8px}
+  .acard .name .sp{font-size:10px;font-style:normal;font-weight:700;letter-spacing:.06em;color:var(--emerald);background:rgba(55,224,143,.1);border:1px solid rgba(55,224,143,.2);padding:3px 8px;border-radius:20px;text-transform:uppercase}
+  .acard .sci{font-size:12px;color:var(--faint);font-style:italic;margin-top:1px}
+  .acard .story{font-size:14px;color:var(--muted);margin:11px 0 15px}
+  .acard .actions{display:flex;gap:9px}
+  .acard .followbtn{flex:1;padding:12px;border-radius:12px;border:1px solid var(--line-strong);background:rgba(255,255,255,.03);color:var(--ink);font-weight:700;font-size:14px;cursor:pointer;font-family:inherit;transition:.2s;display:flex;align-items:center;justify-content:center;gap:7px}
+  .acard .followbtn.on{background:rgba(55,224,143,.14);border-color:var(--emerald);color:var(--emerald)}
+  .acard .clipbtn{flex:0 0 auto;padding:12px 16px;border-radius:12px;border:1px solid var(--line-strong);background:rgba(255,255,255,.03);color:var(--ink);font-weight:700;font-size:14px;cursor:pointer;font-family:inherit;display:flex;align-items:center;gap:7px}
+  .acard .followers{font-size:12px;color:var(--faint);margin-top:11px;display:flex;align-items:center;gap:6px}
+
+  /* PILARES */
+  .pillar .ic{background:rgba(255,180,58,.1);border-color:rgba(255,180,58,.22)}
+  .pillar.p2 .ic{background:rgba(255,93,59,.1);border-color:rgba(255,93,59,.22)}
+  .pillar.p3 .ic{background:rgba(52,203,217,.1);border-color:rgba(52,203,217,.22)}
+  .pillar .tag{margin-top:14px;padding-top:13px;font-size:12.5px;color:var(--faint);border-top:1px solid var(--line)}
+
+  /* DADOS */
+  .dash{background:var(--surface);border:1px solid var(--line);border-radius:22px;padding:24px;backdrop-filter:blur(6px)}
+  .stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:22px}
+  .stat .v{font-family:'Fraunces',serif;font-size:clamp(32px,9vw,44px);font-weight:600;line-height:1;background:linear-gradient(120deg,var(--emerald),var(--amber));-webkit-background-clip:text;background-clip:text;color:transparent}
+  .stat .l{color:var(--muted);font-size:12.5px;margin-top:7px}
+  .dash-note{margin-top:20px;padding-top:18px;border-top:1px solid var(--line);font-size:12px;color:var(--faint)}
+
+  /* INVESTIMENTO */
+  .inv{background:linear-gradient(180deg,transparent,rgba(18,55,38,.26))}
+  .scale-line{display:flex;flex-direction:column;gap:14px;align-items:stretch;margin-bottom:34px}
+  .scale-box{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:20px 22px}
+  .scale-box.future{border-color:rgba(55,224,143,.35);background:linear-gradient(160deg,rgba(55,224,143,.07),var(--surface))}
+  .scale-box .lab{font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--faint);font-weight:700}
+  .scale-box .big{font-family:'Fraunces',serif;font-size:27px;font-weight:600;margin:7px 0 6px}
+  .scale-box.future .big{color:var(--emerald)}
+  .scale-box p{font-size:14px;color:var(--muted)}
+  .arrow{align-self:center;font-size:26px;color:var(--amber);transform:rotate(90deg)}
+  .needs{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:30px}
+  .need{background:rgba(255,255,255,.02);border:1px solid var(--line);border-radius:14px;padding:16px}
+  .need .em{font-size:20px}
+  .need b{display:block;margin:7px 0 3px;font-size:14.5px}
+  .need span{font-size:12.5px;color:var(--muted)}
+  .roadmap{display:flex;flex-direction:column;gap:14px;margin-top:30px}
+  .phase{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:22px}
+  .phase .ph-n{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--amber);font-weight:800}
+  .phase h3{font-size:21px;margin:5px 0 11px}
+  .phase ul{list-style:none;display:flex;flex-direction:column;gap:8px}
+  .phase li{font-size:13.5px;color:var(--muted);padding-left:20px;position:relative}
+  .phase li::before{content:"";position:absolute;left:0;top:8px;width:7px;height:7px;border-radius:50%;background:var(--emerald);opacity:.8}
+
+  /* DANIEL */
+  .daniel{background:linear-gradient(180deg,transparent,rgba(18,55,38,.22),transparent)}
+  .dcard{background:var(--surface);border:1px solid var(--line);border-radius:24px;overflow:hidden;backdrop-filter:blur(6px)}
+  .dphoto{position:relative;aspect-ratio:4/3.4;background:
+      repeating-linear-gradient(135deg,rgba(55,224,143,.05) 0 14px,transparent 14px 28px),
+      radial-gradient(circle at 50% 38%,rgba(55,224,143,.14),transparent 60%),
+      linear-gradient(160deg,#0e2418,#06120c);
+    display:grid;place-items:center;text-align:center;border-bottom:1px solid var(--line)}
+  .dphoto .frame{width:108px;height:108px;border-radius:50%;border:2px dashed rgba(255,255,255,.28);display:grid;place-items:center;font-size:30px;color:rgba(255,255,255,.5)}
+  .dphoto .ph-label{position:absolute;bottom:14px;left:0;right:0;font-size:13px;color:var(--muted);font-style:italic}
+  .dbody{padding:24px}
+  .dbody .role{font-size:11.5px;letter-spacing:.18em;text-transform:uppercase;color:var(--emerald);font-weight:700}
+  .dbody h2{font-size:30px;margin:8px 0 4px}
+  .dbody .loc{color:var(--amber);font-size:14px;font-weight:600;margin-bottom:16px}
+  .dbody .bio{color:#cbdacf;font-size:15.5px;line-height:1.7}
+  .dbody .bio p{margin-bottom:13px}
+  .dbody .sign{font-family:'Fraunces',serif;font-style:italic;font-size:18px;color:var(--ink);margin-top:6px}
+
+  /* CTA */
+  .cta{text-align:center;padding:64px 0}
+  .cta h2{font-size:clamp(28px,8vw,42px);margin:14px 0 0}
+  .cta h2 .em{font-style:italic;color:var(--amber)}
+  .cta p{margin:18px 0 24px;color:var(--muted);font-size:16px}
+  .cta .hero-cta{align-items:stretch}
+
+  footer{border-top:1px solid var(--line);padding:28px 0 calc(28px + var(--safe-b));color:var(--faint);font-size:12.5px}
+  .foot-in{display:flex;flex-direction:column;gap:8px}
+
+  /* VIDEO PLAYER OVERLAY */
+  .player{position:fixed;inset:0;z-index:100;background:rgba(2,6,4,.92);backdrop-filter:blur(8px);display:none;flex-direction:column;padding:0}
+  .player.open{display:flex}
+  .player .pwrap{margin:auto;width:100%;max-width:560px;padding:14px}
+  .pscreen{position:relative;border-radius:20px;overflow:hidden;aspect-ratio:9/13;max-height:74vh;background:#06140d;border:1px solid var(--line-strong)}
+  .pscreen .vid{position:absolute;inset:0;background-size:cover;background-position:center;transform:scale(1.08)}
+  .pscreen .vid.playing{animation:kenburns 14s ease-in-out infinite alternate}
+  @keyframes kenburns{0%{transform:scale(1.05) translate(0,0)}50%{transform:scale(1.22) translate(-3%,-4%)}100%{transform:scale(1.12) translate(3%,2%)}}
+  .pscreen .grain{position:absolute;inset:0;background:linear-gradient(180deg,rgba(3,8,5,.5),transparent 30%,transparent 64%,rgba(3,8,5,.92))}
+  .ptop{position:absolute;top:0;left:0;right:0;padding:14px;display:flex;justify-content:space-between;align-items:flex-start;z-index:3}
+  .ptop .lv{display:flex;align-items:center;gap:7px;font-size:10.5px;font-weight:800;letter-spacing:.08em;background:rgba(255,93,59,.85);color:#fff;padding:6px 11px;border-radius:20px}
+  .ptop .lv .d{width:6px;height:6px;border-radius:50%;background:#fff;animation:blink 1.2s infinite}
+  .ptop .x{width:38px;height:38px;border-radius:50%;background:rgba(4,10,7,.55);border:1px solid var(--line);color:#fff;font-size:18px;cursor:pointer;display:grid;place-items:center}
+  .pbottom{position:absolute;left:0;right:0;bottom:0;padding:16px;z-index:3}
+  .pbottom .pn{font-family:'Fraunces',serif;font-size:26px;font-weight:600;display:flex;align-items:center;gap:9px}
+  .pbottom .ps{font-size:12px;font-style:italic;color:var(--muted);margin-top:1px}
+  .pbottom .pstory{font-size:13.5px;color:#cbdacf;margin:9px 0 12px}
+  .ptrack{height:4px;border-radius:4px;background:rgba(255,255,255,.18);overflow:hidden;margin-bottom:12px}
+  .ptrack .fill{height:100%;width:0;background:var(--emerald)}
+  .ptrack .fill.run{animation:prog 14s linear infinite}
+  @keyframes prog{from{width:0}to{width:100%}}
+  .pctl{display:flex;gap:9px}
+  .pctl .pf{flex:1;padding:12px;border-radius:12px;border:1px solid var(--line-strong);background:rgba(255,255,255,.05);color:var(--ink);font-weight:700;font-size:14px;font-family:inherit;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:7px}
+  .pctl .pf.on{background:rgba(55,224,143,.16);border-color:var(--emerald);color:var(--emerald)}
+
+  /* TOASTS */
+  .toasts{position:fixed;left:0;right:0;bottom:calc(14px + var(--safe-b));z-index:90;display:flex;flex-direction:column;gap:9px;align-items:center;padding:0 14px;pointer-events:none}
+  .toast{pointer-events:auto;width:100%;max-width:440px;background:rgba(7,16,11,.94);backdrop-filter:blur(10px);border:1px solid var(--line-strong);border-radius:16px;padding:11px;display:flex;gap:11px;align-items:center;box-shadow:0 18px 40px -18px #000;transform:translateY(120%);opacity:0;transition:.4s cubic-bezier(.2,.8,.2,1)}
+  .toast.show{transform:none;opacity:1}
+  .toast .tt{width:44px;height:44px;border-radius:11px;overflow:hidden;flex:0 0 auto;background:#11231a;display:grid;place-items:center;font-size:18px}
+  .toast .tt img{width:100%;height:100%;object-fit:cover}
+  .toast .tx{flex:1;min-width:0}
+  .toast .tx b{font-size:14px;display:block;line-height:1.2}
+  .toast .tx span{font-size:12px;color:var(--muted)}
+  .toast.emerald{border-color:rgba(55,224,143,.4)}
+  .toast.scarlet{border-color:rgba(255,93,59,.4)}
+
+  .reveal{opacity:0;transform:translateY(22px);transition:.7s cubic-bezier(.2,.7,.2,1)}
+  .reveal.in{opacity:1;transform:none}
+
+  /* DESKTOP ENHANCE */
+  @media(min-width:780px){
+    .wrap{max-width:1080px;padding:0 28px}
+    .hero{padding:60px 0 20px}
+    .hero-grid{display:grid;grid-template-columns:1.05fr .95fr;gap:48px;align-items:center}
+    .hero h1{font-size:80px}.hero .lead{font-size:20px;max-width:520px}
+    .hero-cta{flex-direction:row}.hero-photo{margin-top:0;aspect-ratio:4/5}
+    .section-head{max-width:680px}.section-head h2{font-size:44px}
+    .grid-cols{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+    .grid-cols.four{grid-template-columns:repeat(4,1fr)}
+    .stack.grid-cols{flex-direction:initial}
+    .animals{grid-template-columns:1fr 1fr}
+    .maprow{display:grid;grid-template-columns:1fr 380px;gap:48px;align-items:center}
+    .appscreen{height:520px}
+    .stat-grid{grid-template-columns:repeat(4,1fr)}
+    .scale-line{flex-direction:row;align-items:stretch}.scale-line .scale-box{flex:1}.arrow{transform:none}
+    .needs{grid-template-columns:repeat(4,1fr)}
+    .roadmap{flex-direction:row}.phase{flex:1}
+    .dcard{display:grid;grid-template-columns:300px 1fr}.dphoto{border-bottom:none;border-right:1px solid var(--line);aspect-ratio:auto}
+    .cta .hero-cta{flex-direction:row;justify-content:center}
+  }
+</style>
+</head>
+<body>
+<div class="contour" aria-hidden="true">
+  <svg viewBox="0 0 800 1400" preserveAspectRatio="xMidYMid slice" fill="none" stroke="#37e08f" stroke-width="1.2">
+    <path d="M-50,200 C150,120 300,260 500,200 C650,150 800,240 880,200"/>
+    <path d="M-50,300 C150,230 320,360 520,300 C660,255 820,330 880,300"/>
+    <path d="M-50,520 C180,440 340,560 540,500 C700,450 820,520 880,500"/>
+    <path d="M-50,640 C180,560 340,680 540,620 C700,570 820,640 880,620"/>
+    <path d="M-50,900 C160,820 320,930 520,880 C690,835 820,900 880,880"/>
+    <path d="M-50,1040 C160,960 320,1070 520,1020 C690,975 820,1040 880,1020"/>
+    <path d="M-50,1240 C160,1160 320,1270 520,1220 C690,1175 820,1240 880,1220"/>
+  </svg>
+</div>
+
+<nav>
+  <div class="nav-in">
+    <div class="brand"><span class="dot"></span>Amazon&nbsp;Feed</div>
+    <a href="#investir" class="nav-cta">Apresentar</a>
+  </div>
+</nav>
+<div class="chips">
+  <a href="#tese">A tese</a>
+  <a href="#funciona">Como funciona</a>
+  <a href="#mapa">Mapa ao vivo</a>
+  <a href="#galeria">Animais</a>
+  <a href="#valor">Por que importa</a>
+  <a href="#investir">Investir</a>
+  <a href="#daniel">Daniel Victor</a>
+</div>
+
+<!-- HERO -->
+<header class="hero">
+  <div class="wrap hero-grid">
+    <div>
+      <span class="live-chip"><span class="rec"></span>TRANSMISSÃO AO VIVO · AMAZÔNIA</span>
+      <div class="eyebrow">Monitoramento de fauna &amp; flora</div>
+      <h1>A floresta<br><span class="em">ao vivo</span>.</h1>
+      <p class="lead">O <b>Amazon Feed</b> é uma rede de câmeras que transmite as aparições de animais da Amazônia, com uma <b>IA que reconhece cada espécie</b> e mostra tudo em um mapa em tempo real. Porque quem conhece a floresta, protege a floresta.</p>
+      <div class="hero-cta">
+        <a href="#galeria" class="btn btn-primary">Conhecer os animais →</a>
+        <a href="#investir" class="btn btn-ghost">Por que investir</a>
+      </div>
+    </div>
+    <div class="hero-photo">
+      <img alt="Onça-pintada na Amazônia"
+           src="https://upload.wikimedia.org/wikipedia/commons/thumb/f/f8/Jaguar_%28Panthera_onca_palustris%29_male_Rio_Negro_2.JPG/1000px-Jaguar_%28Panthera_onca_palustris%29_male_Rio_Negro_2.JPG"
+           data-fb="https://commons.wikimedia.org/wiki/Special:FilePath/Jaguar%20(Panthera%20onca%20palustris)%20male%20Rio%20Negro%202.JPG?width=1000">
+      <div class="scrim"></div>
+      <div class="id-tag">
+        <div class="ai">✦</div>
+        <div><div class="nm">Onça-pintada macho</div><div class="sci">Panthera onca palustris</div></div>
+        <div class="conf"><b>96%</b>IA</div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- TESE -->
+<section id="tese" class="tese">
+  <div class="wrap">
+    <div class="eyebrow reveal">A ideia central</div>
+    <p class="tese-quote reveal" style="margin-top:16px">Ninguém protege o que não conhece. Quando uma onça ou uma arara <span class="hl">ganha nome, rosto e história</span>, ela deixa de ser distante — e passa a ser algo que vale a pena preservar.</p>
+    <p class="tese-sub reveal">O Amazon Feed encurta a distância entre as pessoas e a floresta. Ao transmitir e humanizar cada encontro com a fauna, transformamos curiosidade em consciência, consciência em proteção — e proteção em desenvolvimento para a região.</p>
+  </div>
+</section>
+
+<!-- COMO FUNCIONA -->
+<section id="funciona">
+  <div class="wrap">
+    <div class="section-head reveal">
+      <div class="eyebrow">Como funciona</div>
+      <h2>Da floresta ao seu celular, em quatro passos.</h2>
+    </div>
+    <div class="stack grid-cols four">
+      <div class="card step reveal"><span class="n">01</span><div class="ic">🎥</div><h3>Captura</h3><p>Câmeras registram o movimento da fauna na mata e nos rios, dia e noite.</p></div>
+      <div class="card step reveal"><span class="n">02</span><div class="ic">🧠</div><h3>Identifica</h3><p>A IA reconhece a espécie, dá o nome e calcula a confiança da identificação.</p></div>
+      <div class="card step reveal"><span class="n">03</span><div class="ic">📍</div><h3>Mapeia</h3><p>A aparição surge no mapa com local, horário e a foto do animal.</p></div>
+      <div class="card step reveal"><span class="n">04</span><div class="ic">💚</div><h3>Humaniza</h3><p>Cria perfis dos animais para o público e dados de campo para a conservação.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- MAPA AO VIVO -->
+<section id="mapa">
+  <div class="wrap maprow">
+    <div>
+      <div class="eyebrow reveal">O coração do app</div>
+      <div class="section-head reveal" style="margin-bottom:0">
+        <h2>A floresta inteira em um mapa.</h2>
+        <p>Cada ponto que pulsa é um animal que acabou de aparecer diante de uma câmera. Toque e descubra quem é e onde está — uma janela viva para a Amazônia.</p>
+      </div>
+      <div class="feat-list reveal">
+        <div class="row"><div class="b">🟢</div><div class="t"><b>Aparições em tempo real</b><span>Notificações no momento em que a fauna se revela.</span></div></div>
+        <div class="row"><div class="b">🏷️</div><div class="t"><b>Nome e perfil de cada animal</b><span>A IA identifica a espécie e conta sua história.</span></div></div>
+        <div class="row"><div class="b">📊</div><div class="t"><b>Dados que viram conservação</b><span>Cada registro alimenta o monitoramento ambiental.</span></div></div>
+      </div>
+    </div>
+    <div class="appscreen reveal">
+      <div class="app-top">
+        <div class="ttl"><span class="d"></span>Mapa ao vivo</div>
+        <div class="cnt" id="liveCount">6 ativos</div>
+      </div>
+      <div class="mapc">
+        <svg viewBox="0 0 360 520" preserveAspectRatio="none" aria-hidden="true">
+          <defs><linearGradient id="riv" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#34cbd9" stop-opacity=".55"/><stop offset="1" stop-color="#1f7d52" stop-opacity=".3"/></linearGradient></defs>
+          <path d="M-20,140 C80,118 130,210 220,190 C300,172 340,250 400,228" fill="none" stroke="url(#riv)" stroke-width="15" stroke-linecap="round" opacity=".7"/>
+          <path d="M44,-20 C66,110 14,200 96,300 C156,378 110,470 150,560" fill="none" stroke="url(#riv)" stroke-width="12" stroke-linecap="round" opacity=".5"/>
+          <path d="M400,360 C290,378 250,440 170,440 C80,440 36,510 -20,492" fill="none" stroke="url(#riv)" stroke-width="11" stroke-linecap="round" opacity=".45"/>
+          <circle cx="260" cy="110" r="56" fill="#1f7d52" opacity=".16"/><circle cx="86" cy="410" r="64" fill="#1f7d52" opacity=".14"/>
+        </svg>
+        <div id="pins"></div>
+      </div>
+      <div class="det" id="det">
+        <div class="thumb"><img id="detImg" alt=""></div>
+        <div class="info"><div class="new">● Nova aparição</div><div class="nm" id="detNm">—</div><div class="sci" id="detSci">—</div></div>
+        <div class="conf"><b id="detConf">—</b><span>conf.</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- GALERIA DE ANIMAIS -->
+<section id="galeria">
+  <div class="wrap">
+    <div class="section-head reveal">
+      <div class="eyebrow">Galeria de animais · siga &amp; acompanhe</div>
+      <h2>Conheça os moradores da floresta.</h2>
+      <p>Cada animal tem nome, história e um clipe ao vivo. Siga os seus favoritos e receba uma notificação toda vez que eles forem avistados por uma câmera.</p>
+    </div>
+    <div class="followbar reveal">🔔 <div>Você segue <b id="followCount">0</b> animais — eles avisam quando aparecem.</div></div>
+    <div class="animals" id="animals"></div>
+    <p class="muted reveal" style="font-size:12px;margin-top:16px">Imagens reais sob licença Creative Commons (Wikimedia Commons). Em operação, as fotos e clipes vêm das próprias câmeras do projeto.</p>
+  </div>
+</section>
+
+<!-- PILARES -->
+<section id="valor">
+  <div class="wrap">
+    <div class="section-head reveal">
+      <div class="eyebrow">Três retornos em um só projeto</div>
+      <h2>Por que isso importa para o estado.</h2>
+      <p>O Amazon Feed gera valor ambiental, social e econômico ao mesmo tempo.</p>
+    </div>
+    <div class="stack grid-cols">
+      <div class="card pillar reveal"><div class="ic">🌳</div><h3>Preservação ambiental</h3><p>Conhecimento gera proteção. Os registros viram base de dados de monitoramento que apoiam órgãos ambientais, fiscalização e pesquisa sobre a fauna e a flora.</p><div class="tag">Dados de campo · monitoramento contínuo</div></div>
+      <div class="card pillar p2 reveal"><div class="ic">📲</div><h3>Conteúdo &amp; viralização</h3><p>As pessoas amam ver aparições de animais. Cada encontro vira conteúdo com alto potencial de viralização, levando a Amazônia a milhões de telas.</p><div class="tag">Engajamento · alcance orgânico</div></div>
+      <div class="card pillar p3 reveal"><div class="ic">🧭</div><h3>Turismo &amp; projeção</h3><p>Coloca o Amapá e a Amazônia no mapa do ecoturismo mundial. Atrai visitantes, gera renda local e projeta o estado como guardião da floresta.</p><div class="tag">Ecoturismo · imagem do estado</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- DADOS -->
+<section id="dados">
+  <div class="wrap">
+    <div class="section-head reveal">
+      <div class="eyebrow">Dados de monitoramento</div>
+      <h2>Cada aparição é também um dado.</h2>
+      <p>Além da experiência para o público, o Amazon Feed produz uma camada de dados ambientais que cresce a cada registro.</p>
+    </div>
+    <div class="dash reveal">
+      <div class="stat-grid">
+        <div class="stat"><div class="v" data-to="24">0</div><div class="l">horas de monitoramento por dia, por câmera</div></div>
+        <div class="stat"><div class="v" data-to="100" data-suffix="+">0</div><div class="l">espécies-alvo mapeáveis na região</div></div>
+        <div class="stat"><div class="v" data-to="100" data-suffix="%">0</div><div class="l">das aparições geolocalizadas e datadas</div></div>
+        <div class="stat"><div class="v" data-text="∞">0</div><div class="l">conteúdo para educação e divulgação</div></div>
+      </div>
+      <div class="dash-note">Indicadores ilustrativos do potencial da plataforma. Os números reais crescem conforme a rede de câmeras é ampliada.</div>
+    </div>
+  </div>
+</section>
+
+<!-- INVESTIMENTO -->
+<section id="investir" class="inv">
+  <div class="wrap">
+    <div class="section-head reveal">
+      <div class="eyebrow">Por que vale o investimento</div>
+      <h2>Hoje, uma câmera. Com investimento, uma rede.</h2>
+      <p>O projeto-piloto, criado por estudantes, já prova o conceito com uma única câmera. O salto de impacto vem ao transformar essa prova em infraestrutura — e isso depende de apoio do poder público.</p>
+    </div>
+    <div class="scale-line reveal">
+      <div class="scale-box"><div class="lab">Hoje · piloto</div><div class="big">1 câmera</div><p>Prova de conceito funcionando, criada por estudantes, com alcance em um único ponto da floresta.</p></div>
+      <div class="arrow">→</div>
+      <div class="scale-box future"><div class="lab">Com investimento</div><div class="big">Uma rede viva</div><p>Dezenas de câmeras, IA robusta e equipe dedicada cobrindo várias regiões — monitoramento de verdade, em escala estadual.</p></div>
+    </div>
+    <div class="section-head reveal" style="margin-bottom:14px"><h2 style="font-size:26px">O que o investimento viabiliza</h2></div>
+    <div class="needs reveal">
+      <div class="need"><div class="em">📷</div><b>Mais câmeras</b><span>Ampliar a rede para novos pontos de mata e de rios.</span></div>
+      <div class="need"><div class="em">🛰️</div><b>Tecnologia &amp; conexão</b><span>Energia e transmissão em áreas remotas.</span></div>
+      <div class="need"><div class="em">🧠</div><b>IA &amp; servidores</b><span>Processamento e treino dos modelos.</span></div>
+      <div class="need"><div class="em">👥</div><b>Contratações</b><span>Biólogos, devs e equipe de campo.</span></div>
+    </div>
+    <div class="roadmap reveal">
+      <div class="phase"><div class="ph-n">Fase 1 · Piloto</div><h3>Provar</h3><ul><li>1 câmera em operação</li><li>App e mapa funcionando</li><li>IA identificando espécies-chave</li><li>Validação com o público</li></ul></div>
+      <div class="phase"><div class="ph-n">Fase 2 · Rede regional</div><h3>Escalar</h3><ul><li>Dezenas de câmeras</li><li>Equipe de biologia e tecnologia</li><li>Painel de dados ambientais</li><li>Conteúdo recorrente</li></ul></div>
+      <div class="phase"><div class="ph-n">Fase 3 · Plataforma</div><h3>Consolidar</h3><ul><li>Referência de ecoturismo digital</li><li>Integração com pesquisa</li><li>Projeção nacional do estado</li><li>Modelo replicável na Amazônia</li></ul></div>
+    </div>
+  </div>
+</section>
+
+<!-- DANIEL VICTOR -->
+<section id="daniel" class="daniel">
+  <div class="wrap">
+    <div class="section-head reveal" style="margin-bottom:22px"><div class="eyebrow">Apresentado por</div></div>
+    <div class="dcard reveal">
+      <div class="dphoto">
+        <div class="frame">📷</div>
+        <div class="ph-label">(sua foto aqui)</div>
+      </div>
+      <div class="dbody">
+        <div class="role">Idealizador do projeto</div>
+        <h2>Daniel Victor</h2>
+        <div class="loc">Estudante · Macapá, Amapá</div>
+        <div class="bio">
+          <p>Cresci olhando para o verde do Amapá pela janela — e vendo, aos poucos, esse verde virar fumaça, manchete e silêncio. Sempre me incomodou que a floresta mais viva do planeta seja, para tanta gente, apenas um nome no mapa.</p>
+          <p>Criei o Amazon Feed por uma convicção simples: <b>ninguém destrói aquilo que aprendeu a amar.</b> Quando uma criança vê uma onça respirar, uma arara voltar pro ninho, uma preguiça atravessar um galho — a floresta para de ser abstrata. Vira história, vira afeto, vira algo digno de proteção.</p>
+          <p>Cada câmera é um convite para olhar nos olhos da Amazônia antes que ela vire só memória. Comecei com uma. Com apoio, posso transformar isso em uma rede que protege, ensina e dá orgulho ao nosso estado.</p>
+        </div>
+        <div class="sign">— Daniel Victor</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="cta">
+  <div class="wrap">
+    <div class="eyebrow reveal" style="justify-content:center">Uma proposta ao poder público</div>
+    <h2 class="reveal">Investir no Amazon Feed é investir na <span class="em">floresta que se mostra</span>.</h2>
+    <p class="reveal">Preservação ambiental, conteúdo de alcance global e projeção para o estado, em um projeto nascido localmente. Falta apenas a escala.</p>
+    <div class="hero-cta reveal">
+      <a href="#galeria" class="btn btn-primary">Rever os animais</a>
+      <a href="#investir" class="btn btn-ghost">Ver as fases do investimento</a>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap foot-in">
+    <div><span style="font-family:'Fraunces',serif;color:var(--ink);font-size:15px">Amazon Feed</span> · Monitoramento de fauna e flora · Idealização: <b style="color:var(--muted)">Daniel Victor — Macapá/AP</b></div>
+    <div>Imagens: Wikimedia Commons (CC). Indicadores e clipes ilustrativos para fins de apresentação.</div>
+  </div>
+</footer>
+
+<!-- PLAYER -->
+<div class="player" id="player">
+  <div class="pwrap">
+    <div class="pscreen">
+      <div class="vid" id="pvid"></div>
+      <div class="grain"></div>
+      <div class="ptop">
+        <div class="lv"><span class="d"></span><span id="pcam">AO VIVO · CÂMERA</span></div>
+        <button class="x" id="pclose" aria-label="Fechar">✕</button>
+      </div>
+      <div class="pbottom">
+        <div class="pn" id="pname">—</div>
+        <div class="ps" id="psci">—</div>
+        <div class="pstory" id="pstory">—</div>
+        <div class="ptrack"><div class="fill run" id="pfill"></div></div>
+        <div class="pctl">
+          <button class="pf" id="pplay">⏸ Pausar</button>
+          <button class="pf" id="pfollow">＋ Seguir</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toasts" id="toasts"></div>
+
+<script>
+const U="https://upload.wikimedia.org/wikipedia/commons/thumb/";
+const FB="https://commons.wikimedia.org/wiki/Special:FilePath/";
+function img(direct){return U+direct;}
+/* species data */
+const animals=[
+ {id:"juma", name:"Juma", sp:"Onça-pintada", sci:"Panthera onca", cam:"Câmera Rio Negro", cls:"amber",
+  story:"Fêmea adulta de território amplo nas margens do rio. Mãe de dois filhotes avistados em março.",
+  followers:12840,
+  d:"f/f8/Jaguar_%28Panthera_onca_palustris%29_male_Rio_Negro_2.JPG/1000px-Jaguar_%28Panthera_onca_palustris%29_male_Rio_Negro_2.JPG",
+  fb:"Jaguar%20(Panthera%20onca%20palustris)%20male%20Rio%20Negro%202.JPG"},
+ {id:"anhanga", name:"Anhangá", sp:"Onça melânica", sci:"Panthera onca", cam:"Câmera Igapó", cls:"amber",
+  story:"Onça-preta raríssima — só 3 avistamentos este ano. Cada aparição é um evento para a ciência.",
+  followers:21370,
+  d:"e/ec/Black_Jaguar_%28Panthera_onca%29.JPG/1000px-Black_Jaguar_%28Panthera_onca%29.JPG",
+  fb:"Black%20Jaguar%20(Panthera%20onca).JPG"},
+ {id:"pina", name:"Piná", sp:"Arara-vermelha", sci:"Ara macao", cam:"Câmera Castanheira", cls:"scarlet",
+  story:"Vive em casal — araras escolhem um par para a vida toda. Visita a mesma castanheira ao amanhecer.",
+  followers:9120,
+  d:"f/fd/Scarlet_macaw_Lapa_Rios.JPG/1000px-Scarlet_macaw_Lapa_Rios.JPG",
+  fb:"Scarlet%20macaw%20Lapa%20Rios.JPG"},
+ {id:"tuim", name:"Tuim", sp:"Tucano-toco", sci:"Ramphastos toco", cam:"Câmera Buritizal", cls:"",
+  story:"Pontual: aparece na mesma árvore frutífera toda manhã. Espalha sementes por onde passa.",
+  followers:7430,
+  d:"2/28/Toco_toucan_%28Ramphastos_toco%29_adult.JPG/1000px-Toco_toucan_%28Ramphastos_toco%29_adult.JPG",
+  fb:"Toco%20toucan%20(Ramphastos%20toco)%20adult.JPG"},
+ {id:"mura", name:"Mura", sp:"Preguiça", sci:"Bradypus variegatus", cam:"Câmera Dossel", cls:"",
+  story:"Desceu ao chão pela primeira vez em semanas. Move-se devagar — mas a câmera não perde nada.",
+  followers:15680,
+  d:"e/e7/Brown-throated_three-toed_sloth_female.JPG/1000px-Brown-throated_three-toed_sloth_female.JPG",
+  fb:"Brown-throated%20three-toed%20sloth%20female.JPG"},
+ {id:"maira", name:"Maíra", sp:"Capivara", sci:"Hydrochoerus hydrochaeris", cam:"Câmera Igarapé", cls:"river",
+  story:"Lidera um grupo de 9 capivaras na beira do igarapé. Tranquila, deixa aves pousarem em suas costas.",
+  followers:6890,
+  d:"3/32/Capybara_%28Hydrochoerus_hydrochaeris%29_alpha_male.JPG/1000px-Capybara_%28Hydrochoerus_hydrochaeris%29_alpha_male.JPG",
+  fb:"Capybara%20(Hydrochoerus%20hydrochaeris)%20alpha%20male.JPG"},
+];
+const seenLabels=["há 12 min","há 38 min","há 1 h","há 2 h","há 4 h","ontem"];
+
+/* state */
+let follows={};
+try{const s=localStorage.getItem("af_follows");if(s)follows=JSON.parse(s);}catch(e){}
+function saveFollows(){try{localStorage.setItem("af_follows",JSON.stringify(follows));}catch(e){}}
+function fmt(n){return n>=1000?(n/1000).toFixed(1).replace(".0","")+" mil":n;}
+
+/* image fallback */
+function attachFallback(im){
+  im.addEventListener("error",function(){
+    if(!im.dataset.tried&&im.dataset.fb){im.dataset.tried="1";im.src=im.dataset.fb;return;}
+    const c=["#1f7d52","#123726","#b86a12","#9e3a22","#1d6f78"][(im.alt||"").length%5];
+    im.style.display="none";const ph=document.createElement("div");
+    ph.style.cssText="position:absolute;inset:0;display:grid;place-items:center;text-align:center;padding:10px;background:linear-gradient(150deg,"+c+",#06140d);color:#eef4ee;font-family:Fraunces,serif;font-size:14px;";
+    ph.textContent=im.alt||"Amazônia";im.parentElement.appendChild(ph);
+  });
+}
+document.querySelectorAll("img").forEach(attachFallback);
+
+/* render gallery */
+const wrapEl=document.getElementById("animals");
+animals.forEach((a,i)=>{
+  const seen=seenLabels[i%seenLabels.length];
+  const on=!!follows[a.id];
+  const el=document.createElement("div");el.className="acard reveal";
+  el.innerHTML=`
+    <div class="media" data-open="${a.id}">
+      <span class="livetag"><span class="d"></span>AO VIVO</span>
+      <img alt="${a.sp} ${a.name}" src="${img(a.d)}" data-fb="${FB+a.fb}?width=1000">
+      <span class="seen">👁 ${seen}</span>
+      <div class="play"><div class="pbtn">▶</div></div>
+    </div>
+    <div class="body">
+      <div class="name">${a.name} <span class="sp">${a.sp}</span></div>
+      <div class="sci">${a.sci} · ${a.cam}</div>
+      <div class="story">${a.story}</div>
+      <div class="actions">
+        <button class="followbtn ${on?'on':''}" data-follow="${a.id}">${on?'✓ Seguindo':'＋ Seguir'}</button>
+        <button class="clipbtn" data-open="${a.id}">▶ Clipe</button>
+      </div>
+      <div class="followers">👥 <b data-fc="${a.id}">${fmt(a.followers+(on?1:0))}</b> seguidores</div>
+    </div>`;
+  wrapEl.appendChild(el);
+});
+document.querySelectorAll("#animals img").forEach(attachFallback);
+
+function byId(id){return animals.find(a=>a.id===id);}
+function updateFollowCount(){
+  const n=Object.values(follows).filter(Boolean).length;
+  document.getElementById("followCount").textContent=n;
+}
+updateFollowCount();
+
+function toggleFollow(id,fromPlayer){
+  const a=byId(id);follows[id]=!follows[id];saveFollows();
+  document.querySelectorAll(`[data-follow="${id}"]`).forEach(b=>{
+    b.classList.toggle("on",follows[id]);b.textContent=follows[id]?"✓ Seguindo":"＋ Seguir";
+  });
+  document.querySelectorAll(`[data-fc="${id}"]`).forEach(b=>b.textContent=fmt(a.followers+(follows[id]?1:0)));
+  if(player.classList.contains("open")&&curId===id){pfollow.classList.toggle("on",follows[id]);pfollow.textContent=follows[id]?"✓ Seguindo":"＋ Seguir";}
+  updateFollowCount();
+  if(follows[id]) toast("emerald", a, `Agora você segue ${a.name}`, `Avisaremos sempre que ${a.name} aparecer 🔔`);
+  else toast("", a, `Deixou de seguir ${a.name}`, "Você não receberá mais avisos");
+}
+
+/* PLAYER */
+const player=document.getElementById("player"),pvid=document.getElementById("pvid"),
+ pname=document.getElementById("pname"),psci=document.getElementById("psci"),pstory=document.getElementById("pstory"),
+ pcam=document.getElementById("pcam"),pfill=document.getElementById("pfill"),pplay=document.getElementById("pplay"),
+ pfollow=document.getElementById("pfollow"),pclose=document.getElementById("pclose");
+let curId=null,playing=true;
+function openPlayer(id){
+  const a=byId(id);curId=id;
+  pvid.style.backgroundImage=`url('${img(a.d)}')`;
+  pvid.classList.add("playing");pfill.classList.add("run");playing=true;pplay.classList.add("on");pplay.textContent="⏸ Pausar";
+  pname.firstChild?(pname.innerHTML=`${a.name} <span class="sp" style="font-size:11px;font-weight:700;letter-spacing:.06em;color:var(--emerald);background:rgba(55,224,143,.1);border:1px solid rgba(55,224,143,.2);padding:3px 9px;border-radius:20px;text-transform:uppercase">${a.sp}</span>`):0;
+  psci.textContent=a.sci;pstory.textContent=a.story;pcam.textContent="AO VIVO · "+a.cam.toUpperCase();
+  pfollow.classList.toggle("on",!!follows[id]);pfollow.textContent=follows[id]?"✓ Seguindo":"＋ Seguir";
+  // restart progress animation
+  pfill.style.animation="none";void pfill.offsetWidth;pfill.style.animation="";
+  player.classList.add("open");document.body.style.overflow="hidden";
+}
+function closePlayer(){player.classList.remove("open");document.body.style.overflow="";pvid.style.backgroundImage="";}
+pclose.addEventListener("click",closePlayer);
+player.addEventListener("click",e=>{if(e.target===player||e.target.classList.contains("pwrap"))closePlayer();});
+pplay.addEventListener("click",()=>{
+  playing=!playing;
+  pvid.style.animationPlayState=playing?"running":"paused";
+  pfill.style.animationPlayState=playing?"running":"paused";
+  pplay.classList.toggle("on",playing);pplay.textContent=playing?"⏸ Pausar":"▶ Reproduzir";
+});
+pfollow.addEventListener("click",()=>toggleFollow(curId,true));
+
+document.addEventListener("click",e=>{
+  const o=e.target.closest("[data-open]");if(o){openPlayer(o.getAttribute("data-open"));return;}
+  const f=e.target.closest("[data-follow]");if(f){toggleFollow(f.getAttribute("data-follow"));}
+});
+
+/* TOASTS */
+const toastsEl=document.getElementById("toasts");
+function toast(type,a,title,sub){
+  const t=document.createElement("div");t.className="toast "+(type||"");
+  const thumb=a?`<div class="tt"><img alt="" src="${img(a.d)}" data-fb="${FB+a.fb}?width=300"></div>`:`<div class="tt">🔔</div>`;
+  t.innerHTML=thumb+`<div class="tx"><b>${title}</b><span>${sub}</span></div>`;
+  toastsEl.appendChild(t);const im=t.querySelector("img");if(im)attachFallback(im);
+  requestAnimationFrame(()=>t.classList.add("show"));
+  setTimeout(()=>{t.classList.remove("show");setTimeout(()=>t.remove(),450);},4600);
+  // keep max 3
+  while(toastsEl.children.length>3)toastsEl.removeChild(toastsEl.firstChild);
+}
+
+/* simulated live sightings */
+function randomSighting(){
+  const followed=animals.filter(a=>follows[a.id]);
+  if(followed.length&&Math.random()<.7){
+    const a=followed[Math.floor(Math.random()*followed.length)];
+    toast("scarlet",a,`🔔 ${a.name} apareceu agora!`,`${a.sp} avistada na ${a.cam}`);
+  }else{
+    const a=animals[Math.floor(Math.random()*animals.length)];
+    toast("",a,`Nova aparição: ${a.sp}`,`Registrada na ${a.cam} · siga para ser avisado`);
+  }
+}
+setTimeout(()=>{setInterval(randomSighting,14000);randomSighting();},6000);
+
+/* LIVE MAP pins + detection cycle */
+const det=animals.map((a,i)=>({...a,x:[62,30,72,40,46,82][i],y:[28,46,66,22,74,40][i],conf:[96,95,91,93,89,90][i]+"%"}));
+const pinsEl=document.getElementById("pins");
+det.forEach((d,i)=>{
+  const p=document.createElement("div");p.className="pin "+d.cls;
+  p.style.left=d.x+"%";p.style.top=d.y+"%";p.style.animationDelay=(0.4+i*0.4)+"s";
+  p.setAttribute("data-open",d.id);
+  p.innerHTML=`<div class="ring" style="animation-delay:${i*0.5}s"></div><div class="ph"><img alt="${d.sp}" src="${img(d.d)}" data-fb="${FB+d.fb}?width=300"></div>`;
+  pinsEl.appendChild(p);d.el=p;
+});
+document.querySelectorAll("#pins img").forEach(attachFallback);
+const detImg=document.getElementById("detImg"),detNm=document.getElementById("detNm"),detSci=document.getElementById("detSci"),detConf=document.getElementById("detConf"),detBox=document.getElementById("det");
+attachFallback(detImg);
+let cur=-1;
+function cycle(){
+  if(cur>=0)det[cur].el.classList.remove("active");
+  cur=(cur+1)%det.length;const d=det[cur];d.el.classList.add("active");
+  detBox.style.opacity=0;
+  setTimeout(()=>{detImg.src=img(d.d);detImg.dataset.fb=FB+d.fb+"?width=300";detImg.dataset.tried="";detNm.textContent=d.name+" · "+d.sp;detSci.textContent=d.sci;detConf.textContent=d.conf;detBox.style.opacity=1;},220);
+}
+cycle();setInterval(cycle,2800);
+
+/* count-up + reveal */
+function countUp(el){const tx=el.getAttribute("data-text");if(tx){el.textContent=tx;return;}
+  const to=+el.getAttribute("data-to"),suf=el.getAttribute("data-suffix")||"";let s=0,st=Math.max(1,Math.round(to/40));
+  const t=setInterval(()=>{s+=st;if(s>=to){s=to;clearInterval(t);}el.textContent=s+suf;},28);}
+const io=new IntersectionObserver(es=>{es.forEach(e=>{if(e.isIntersecting){e.target.classList.add("in");
+  if(e.target.matches&&e.target.matches(".v[data-to],.v[data-text]"))countUp(e.target);io.unobserve(e.target);}});},{threshold:.15});
+document.querySelectorAll(".reveal,.v[data-to],.v[data-text]").forEach(el=>io.observe(el));
+</script>
+</body>
+</html>
