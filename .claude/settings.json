@@ -17,7 +17,14 @@
       "WebSearch",
       "Bash(ls \"c:\\\\Users\\\\pedro\\\\Desktop\\\\a PEDRO BUSINES\\\\cria-ativos\\\\\")",
       "Read(//c/Users/pedro/Desktop/a PEDRO BUSINES/**)",
-      "PowerShell(New-Item -ItemType Directory -Force \"c:\\\\Users\\\\pedro\\\\Desktop\\\\a PEDRO BUSINES\\\\cria-ativos\\\\api\")"
+      "PowerShell(New-Item -ItemType Directory -Force \"c:\\\\Users\\\\pedro\\\\Desktop\\\\a PEDRO BUSINES\\\\cria-ativos\\\\api\")",
+      "Bash(curl -s http://localhost:5180/index.html -o /dev/null -w \"%{http_code}\\\\n\")",
+      "Bash(curl -sL http://localhost:5180/ -o /dev/null -w \"%{http_code}\\\\n\")",
+      "Bash(cd \"/c/Users/pedro/Desktop/a PEDRO BUSINES/cria-ativos\" && grep -n 'id=\"gv-grid\"\\\\|class=\"gv-card\"\\\\|id=\"lg-list\"\\\\|function renderLog' index.html | head -20)",
+      "Read(//c/c/Users/pedro/Desktop/a PEDRO BUSINES/cria-ativos/**)",
+      "Bash(awk -F'function ' '{print $2}')",
+      "Bash(node -e ' *)",
+      "Bash(pkill -f \"serve -l 5180\")"
     ],
     "additionalDirectories": [
       "C:\\Windows\\System32\\drivers\\etc"
