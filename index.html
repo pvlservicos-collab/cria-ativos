@@ -52,72 +52,113 @@
 
     /* SIDEBAR */
     #sidebar {
-      width: 52px;
-      min-width: 52px;
+      width: 172px;
+      min-width: 172px;
       background: var(--bg2);
       border-right: 1px solid var(--b1);
       display: flex;
       flex-direction: column;
-      align-items: center;
-      padding: 10px 0;
-      gap: 6px;
+      padding: 16px 0;
+      gap: 14px;
       z-index: 500;
-      flex-shrink: 0
+      flex-shrink: 0;
+      overflow-y: auto
     }
 
     .sb-logo {
       font-family: 'Syne', sans-serif;
       font-weight: 800;
-      font-size: 9px;
-      color: var(--t4);
-      letter-spacing: .12em;
+      font-size: 12px;
+      color: var(--t2);
+      letter-spacing: .14em;
       text-transform: uppercase;
-      writing-mode: vertical-rl;
-      transform: rotate(180deg);
-      margin-bottom: 4px
+      padding: 0 18px
     }
 
-    .sb-sep {
-      width: 26px;
-      height: 1px;
-      background: var(--b1);
-      margin: 2px 0
+    .sb-menu {
+      display: flex;
+      flex-direction: column;
+      gap: 4px
     }
 
-    .sb-btn {
-      width: 34px;
-      height: 34px;
-      border-radius: 8px;
-      border: 1px solid transparent;
+    .sb-group {
+      border-left: 3px solid transparent;
+      padding-left: 13px;
+      margin-right: 10px
+    }
+    .sb-group.g-imagem { border-left-color: #5b8def }
+    .sb-group.g-post   { border-left-color: #54c08a }
+    .sb-group.g-video  { border-left-color: #e0617a }
+    .sb-group.g-config { border-left-color: #caa45a }
+
+    .sb-hdr {
+      display: block;
+      width: 100%;
+      text-align: left;
       background: transparent;
+      border: none;
       cursor: pointer;
+      padding: 8px 12px;
+      font-family: 'Syne', sans-serif;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: .03em;
+      color: var(--t3);
+      border-radius: 0 7px 7px 0;
+      transition: all .15s
+    }
+    .sb-hdr:hover { background: rgba(255,255,255,.045); color: var(--t1) }
+    .sb-hdr.active { background: rgba(255,255,255,.07); color: var(--t1) }
+
+    .sb-items {
+      display: flex;
+      flex-direction: column
+    }
+    .sb-item {
+      display: block;
+      width: 100%;
+      text-align: left;
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      padding: 6px 12px 6px 22px;
+      font-size: 11px;
+      color: var(--t4);
+      border-radius: 0 6px 6px 0;
+      transition: all .15s
+    }
+    .sb-item:hover { background: rgba(255,255,255,.04); color: var(--t2) }
+    .sb-item.active { background: rgba(255,255,255,.06); color: var(--t1) }
+
+    /* PLACEHOLDER VIEW */
+    .ph-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      gap: 10px
+    }
+    .ph-icon {
+      width: 56px;
+      height: 56px;
+      border-radius: 16px;
       display: flex;
       align-items: center;
       justify-content: center;
-      color: var(--t4);
-      transition: all .15s
+      border: 1px solid currentColor;
+      background: rgba(255,255,255,.04)
     }
-
-    .sb-btn:hover {
-      background: var(--bg4);
-      border-color: var(--b2);
-      color: var(--t2)
-    }
-
-    .sb-btn.active {
-      background: var(--bg4);
-      border-color: var(--b3);
+    .ph-icon svg { width: 26px; height: 26px; fill: none; stroke: currentColor; stroke-width: 1.5 }
+    .ph-title {
+      font-family: 'Syne', sans-serif;
+      font-weight: 700;
+      font-size: 15px;
       color: var(--t1)
     }
-
-    .sb-btn svg {
-      width: 16px;
-      height: 16px;
-      fill: none;
-      stroke: currentColor;
-      stroke-width: 1.5;
-      stroke-linecap: round;
-      stroke-linejoin: round
+    .ph-sub {
+      font-size: 11px;
+      color: var(--t3)
     }
 
     /* MAIN */
@@ -206,6 +247,79 @@
       background: var(--bg4)
     }
 
+    .tb-sel {
+      padding: 4px 8px;
+      border-radius: 6px;
+      border: 1px solid var(--b2);
+      background: var(--bg3);
+      color: var(--t2);
+      font-size: 10px;
+      font-family: 'DM Sans', sans-serif;
+      cursor: pointer;
+      max-width: 130px
+    }
+
+    /* API STATUS WIDGET */
+    #api-status-wrap { position: relative }
+    #api-status-btn {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 9px;
+      border-radius: 6px;
+      border: 1px solid var(--b2);
+      background: var(--bg3);
+      cursor: pointer;
+      transition: all .15s
+    }
+    #api-status-btn:hover { border-color: var(--b3) }
+
+    .api-led {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      display: inline-block;
+      box-shadow: 0 0 5px currentColor
+    }
+    .led-green  { background: #5fcf7a; color: #5fcf7a }
+    .led-yellow { background: #d8c24a; color: #d8c24a }
+    .led-red    { background: #e16868; color: #e16868 }
+
+    #api-status-drop {
+      display: none;
+      position: absolute;
+      top: calc(100% + 6px);
+      left: 0;
+      min-width: 210px;
+      background: var(--bg3);
+      border: 1px solid var(--b2);
+      border-radius: 9px;
+      padding: 8px;
+      z-index: 900;
+      box-shadow: 0 10px 28px rgba(0,0,0,.45)
+    }
+    #api-status-drop.open { display: block }
+    .asd-title {
+      font-family: 'Syne', sans-serif;
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      color: var(--t4);
+      padding: 2px 4px 7px
+    }
+    .asd-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 5px 4px;
+      font-size: 11px;
+      color: var(--t2)
+    }
+    .asd-row .api-led { flex-shrink: 0 }
+    .asd-name { flex: 1 }
+    .asd-state { font-size: 9px; color: var(--t4) }
+
     /* VIEWS */
     .view {
       display: none;
@@ -264,10 +378,13 @@
     /* IDENTITY CARD */
     .identity-card {
       width: 220px;
-      background: linear-gradient(155deg, #141414, #111111);
-      border-color: #2a2a2a;
-      z-index: 20
+      background: #1b1130;
+      border-color: rgba(170,120,230,.4);
+      z-index: 20;
+      --t1: #fff; --t2: #fff; --t3: #fff; --t4: #fff;
+      color: #fff;
     }
+    .identity-card * { color: #fff }
 
     .id-section {
       padding: 8px 13px;
@@ -455,6 +572,245 @@
       color: var(--t2);
       background: var(--bg5)
     }
+
+    /* Removable chip / swatch (fonts & colors) */
+    .id-chip { position: relative; padding-right: 18px }
+    .id-chip-x, .id-swatch-x {
+      position: absolute;
+      top: -5px;
+      right: -5px;
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: var(--bg5);
+      border: 1px solid var(--b3);
+      color: var(--t3);
+      font-size: 9px;
+      line-height: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      opacity: 0;
+      transition: opacity .12s, color .12s, background .12s
+    }
+    .id-chip:hover .id-chip-x,
+    .id-swatch:hover + .id-swatch-x,
+    .id-swatch-wrap:hover .id-swatch-x { opacity: 1 }
+    .id-chip-x:hover, .id-swatch-x:hover { color: #c08080; background: #2a1a1a }
+    .id-swatch-wrap { position: relative; flex-shrink: 0 }
+
+    /* REF CARD: remove image + style select */
+    .ref-img-del {
+      position: absolute;
+      top: 4px;
+      right: 4px;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: rgba(10,10,10,.65);
+      border: 1px solid rgba(255,255,255,.18);
+      color: #e8e8e8;
+      font-size: 11px;
+      line-height: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      z-index: 5
+    }
+    .ref-img-del:hover { background: #2a1a1a; border-color: #4a2a2a; color: #c08080 }
+    .ref-style-sel {
+      width: 100%;
+      margin-top: 6px;
+      padding: 4px 6px;
+      border-radius: 6px;
+      border: 1px solid var(--b2);
+      background: var(--bg);
+      color: var(--t2);
+      font-size: 10px;
+      font-family: 'DM Sans', sans-serif;
+      cursor: pointer
+    }
+    .ref-lib-btn {
+      margin-top: 5px;
+      width: 100%;
+      padding: 5px 6px;
+      border-radius: 6px;
+      border: 1px dashed var(--b2);
+      background: transparent;
+      color: var(--t4);
+      font-size: 9px;
+      cursor: pointer;
+      transition: all .15s
+    }
+    .ref-lib-btn:hover { border-color: var(--b3); color: var(--t2) }
+
+    /* GENERATION TIMER */
+    .cr-timer {
+      font-family: 'DM Mono', monospace;
+      font-size: 9px;
+      color: var(--t3);
+      letter-spacing: .04em
+    }
+    .cr-timer.done { color: #6fae7c }
+
+    /* LIBRARY SUB-TABS */
+    .lib-tabs {
+      display: flex;
+      gap: 6px;
+      margin-left: 14px
+    }
+    .lib-tab {
+      padding: 5px 12px;
+      border-radius: 6px;
+      border: 1px solid var(--b2);
+      background: transparent;
+      color: var(--t4);
+      font-size: 11px;
+      cursor: pointer;
+      transition: all .15s;
+      font-family: 'DM Sans', sans-serif
+    }
+    .lib-tab.on { background: var(--bg4); border-color: var(--b3); color: var(--t1) }
+    .lib-tab:hover { color: var(--t2) }
+
+    .style-card {
+      background: var(--bg3);
+      border: 1px solid var(--b1);
+      border-radius: 10px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      position: relative
+    }
+    .style-card-img-area {
+      width: 100%;
+      aspect-ratio: 4/3;
+      background: var(--bg4);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden
+    }
+    .style-card-img-area img { width: 100%; height: 100%; object-fit: cover; display: block }
+    .style-card-img-empty { font-size: 20px; color: var(--t4) }
+    .style-card-body { padding: 8px 10px; display: flex; flex-direction: column; gap: 5px }
+    .style-name-input {
+      background: transparent;
+      border: none;
+      border-bottom: 1px solid var(--b1);
+      color: var(--t1);
+      font-family: 'Syne', sans-serif;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 2px 0;
+      outline: none
+    }
+    .style-prompt-ta {
+      width: 100%;
+      background: var(--bg);
+      border: 1px solid var(--b1);
+      border-radius: 6px;
+      color: var(--t2);
+      font-size: 10px;
+      font-family: 'DM Mono', monospace;
+      padding: 5px 7px;
+      resize: none;
+      outline: none;
+      line-height: 1.5
+    }
+
+    .ref-lib-card {
+      background: var(--bg3);
+      border: 1px solid var(--b1);
+      border-radius: 10px;
+      overflow: hidden;
+      position: relative;
+      cursor: pointer;
+      aspect-ratio: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: border-color .15s
+    }
+    .ref-lib-card:hover { border-color: var(--b3) }
+    .ref-lib-card img { width: 100%; height: 100%; object-fit: cover; display: block }
+    .ref-lib-card-empty { font-size: 18px; color: var(--t4) }
+    .ref-lib-use {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(10,10,10,.55);
+      color: #f0f0f0;
+      font-size: 10px;
+      font-family: 'Syne', sans-serif;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      opacity: 0;
+      transition: opacity .15s
+    }
+    .ref-lib-card:hover .ref-lib-use { opacity: 1 }
+
+    /* MULTI API KEYS (settings) */
+    .api-key-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 10px;
+      background: var(--bg2);
+      border: 1px solid var(--b1);
+      border-radius: 8px;
+      margin-bottom: 6px
+    }
+    .api-key-row input { flex: 1 }
+    .api-key-name {
+      width: 110px;
+      flex-shrink: 0;
+      padding: 6px 8px;
+      border-radius: 6px;
+      border: 1px solid var(--b2);
+      background: var(--bg);
+      color: var(--t1);
+      font-size: 11px;
+      font-family: 'DM Sans', sans-serif;
+      outline: none
+    }
+    .api-key-input {
+      flex: 1;
+      padding: 6px 8px;
+      border-radius: 6px;
+      border: 1px solid var(--b2);
+      background: var(--bg);
+      color: var(--t2);
+      font-size: 11px;
+      font-family: 'DM Mono', monospace;
+      outline: none
+    }
+    .api-key-del {
+      width: 26px;
+      height: 26px;
+      border-radius: 6px;
+      border: 1px solid var(--b1);
+      background: transparent;
+      color: var(--t4);
+      cursor: pointer;
+      flex-shrink: 0
+    }
+    .api-key-del:hover { color: #c08080; border-color: #4a2a2a; background: #2a1a1a }
+    .api-key-add {
+      padding: 6px 12px;
+      border-radius: 6px;
+      border: 1px dashed var(--b2);
+      background: transparent;
+      color: var(--t4);
+      font-size: 11px;
+      cursor: pointer;
+      transition: all .15s
+    }
+    .api-key-add:hover { border-color: var(--b3); color: var(--t2) }
 
     .id-prompt-ta {
       width: 100%;
@@ -708,9 +1064,13 @@
     /* REF CARD */
     .ref-card {
       width: 148px;
-      background: linear-gradient(145deg, #111, #171717);
-      z-index: 25
+      background: #0c1830;
+      border-color: rgba(95,150,235,.4);
+      z-index: 25;
+      --t1: #fff; --t2: #fff; --t3: #fff; --t4: #fff;
+      color: #fff;
     }
+    .ref-card * { color: #fff }
 
     .ref-handle {
       padding: 7px 10px 0;
@@ -785,12 +1145,16 @@
     /* COPY CARD */
     .copy-card {
       width: 190px;
-      background: linear-gradient(155deg, #151515, #1a1a1a);
+      background: #271e08;
+      border-color: rgba(205,170,70,.38);
       z-index: 25;
       display: flex;
       flex-direction: column;
-      overflow: hidden
+      overflow: hidden;
+      --t1: #fff; --t2: #fff; --t3: #fff; --t4: #fff;
+      color: #fff;
     }
+    .copy-card * { color: #fff }
 
     .copy-handle {
       padding: 7px 10px 0;
@@ -1357,6 +1721,28 @@
       color: var(--t4)
     }
 
+    .lib-section { margin-bottom: 22px }
+    .lib-sec-title {
+      font-family: 'Syne', sans-serif;
+      font-weight: 700;
+      font-size: 12px;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+      color: var(--t2);
+      display: flex;
+      align-items: baseline;
+      gap: 10px;
+      margin-bottom: 10px
+    }
+    .lib-sec-hint {
+      font-family: 'Inter', sans-serif;
+      font-weight: 400;
+      font-size: 10px;
+      letter-spacing: 0;
+      text-transform: none;
+      color: var(--t4)
+    }
+
     .lib-grid {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
@@ -1611,6 +1997,53 @@
       background: var(--b2);
       border-radius: 4px
     }
+
+    /* MODAL: Biblioteca de Referências (picker) */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(5,5,5,.6);
+      z-index: 2000;
+      align-items: center;
+      justify-content: center
+    }
+    .modal-overlay.open { display: flex }
+    .modal-box {
+      width: min(640px, 92vw);
+      max-height: 80vh;
+      background: var(--bg2);
+      border: 1px solid var(--b2);
+      border-radius: 14px;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden
+    }
+    .modal-hdr {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--b1)
+    }
+    .modal-close {
+      width: 26px;
+      height: 26px;
+      border-radius: 6px;
+      border: 1px solid var(--b1);
+      background: transparent;
+      color: var(--t3);
+      cursor: pointer;
+      font-size: 14px
+    }
+    .modal-close:hover { color: var(--t1); border-color: var(--b3) }
+    .modal-body {
+      padding: 14px;
+      overflow-y: auto;
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+      gap: 10px
+    }
   </style>
 </head>
 
@@ -1619,41 +2052,27 @@
 
     <!-- SIDEBAR -->
     <div id="sidebar">
-      <div class="sb-logo">CA</div>
-      <div class="sb-sep"></div>
-      <button class="sb-btn active" title="Storyboard" onclick="nav('board',this)">
-        <svg viewBox="0 0 24 24">
-          <rect x="3" y="3" width="7" height="7" rx="1" />
-          <rect x="14" y="3" width="7" height="7" rx="1" />
-          <rect x="3" y="14" width="7" height="7" rx="1" />
-          <rect x="14" y="14" width="7" height="7" rx="1" />
-        </svg>
-      </button>
-      <button class="sb-btn" title="Log de Geração" onclick="nav('log',this)">
-        <svg viewBox="0 0 24 24">
-          <path d="M4 6h16M4 12h16M4 18h10" />
-        </svg>
-      </button>
-      <button class="sb-btn" title="Galeria" onclick="nav('gallery',this)">
-        <svg viewBox="0 0 24 24">
-          <rect x="3" y="3" width="18" height="14" rx="2" />
-          <path d="M3 17l4-4 3 3 4-5 7 6" />
-        </svg>
-      </button>
-      <button class="sb-btn" title="Biblioteca" onclick="nav('library',this)">
-        <svg viewBox="0 0 24 24">
-          <path d="M19 3H5a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2V5a2 2 0 00-2-2z" />
-          <path d="M9 9h6M9 13h6M9 17h4" />
-        </svg>
-      </button>
-      <div class="sb-sep"></div>
-      <button class="sb-btn" title="Configurações" onclick="nav('settings',this)">
-        <svg viewBox="0 0 24 24">
-          <circle cx="12" cy="12" r="3" />
-          <path
-            d="M12 2v2m0 16v2M4.22 4.22l1.42 1.42m12.72 12.72l1.42 1.42M2 12h2m16 0h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" />
-        </svg>
-      </button>
+      <div class="sb-logo">Cria-ativos</div>
+      <nav class="sb-menu">
+        <div class="sb-group g-imagem">
+          <button class="sb-hdr active" data-cat="imagem" onclick="switchCat('imagem',this)">Imagem</button>
+          <div class="sb-items">
+            <button class="sb-item active" title="Storyboard" data-view="board" onclick="nav('board',this)">Storyboard</button>
+            <button class="sb-item" title="Log de Geração" data-view="log" onclick="nav('log',this)">Log</button>
+            <button class="sb-item" title="Galeria" data-view="gallery" onclick="nav('gallery',this)">Galeria</button>
+            <button class="sb-item" title="Biblioteca" data-view="library" onclick="nav('library',this)">Biblioteca</button>
+          </div>
+        </div>
+        <div class="sb-group g-post">
+          <button class="sb-hdr" data-cat="post" onclick="switchCat('post',this)">Post</button>
+        </div>
+        <div class="sb-group g-video">
+          <button class="sb-hdr" data-cat="video" onclick="switchCat('video',this)">Vídeo</button>
+        </div>
+        <div class="sb-group g-config">
+          <button class="sb-hdr" data-cat="config" onclick="switchCat('config',this)">Configuração</button>
+        </div>
+      </nav>
     </div>
 
     <!-- MAIN -->
@@ -1669,12 +2088,25 @@
           <div id="wf-list"></div>
           <div class="wf-new" onclick="newWorkflow()"><span>+</span> Novo workflow</div>
         </div>
+
+        <div id="api-status-wrap">
+          <button id="api-status-btn" onclick="toggleApiStatusDrop()">
+            <span id="api-status-dot" class="api-led led-yellow"></span>
+            <span style="font-size:10px;color:var(--t3)">APIs</span>
+          </button>
+          <div id="api-status-drop">
+            <div class="asd-title">Status das APIs</div>
+            <div id="api-status-list"></div>
+          </div>
+        </div>
+
         <div id="tb-right">
           <button class="tb-btn" onclick="clearConns()">Limpar linhas</button>
           <button class="tb-btn" onclick="autoConnect()">Auto-conectar</button>
           <span id="sync-dot" title="Sincronizado" style="display:inline-flex;align-items:center;gap:4px;font-size:10px;color:var(--t4);padding:0 6px">
             <span id="sync-icon" style="font-size:8px">●</span><span id="sync-label">cloud</span>
           </span>
+          <select class="tb-sel" id="gen-api-sel" title="Chave de API usada para gerar" onchange="setActiveApiKey(this.value)"></select>
           <button class="tb-btn hi" id="gen-all-btn" onclick="genAll()">⚡ Gerar todos</button>
         </div>
       </div>
@@ -1715,10 +2147,16 @@
       <!-- LIBRARY -->
       <div id="library-view" class="view">
         <div class="lib-hdr">
-          <span class="lib-title">Biblioteca de Referências</span>
-          <span class="lib-hint">Clique na imagem para upload • Arraste para reordenar</span>
+          <span class="lib-title">Biblioteca</span>
         </div>
-        <div class="lib-grid" id="lib-grid"></div>
+        <div class="lib-section">
+          <div class="lib-sec-title">Estilos <span class="lib-sec-hint">Defina nome, imagem e prompt de cada estilo — usado no dropdown dos cards de referência</span></div>
+          <div class="lib-grid" id="style-grid"></div>
+        </div>
+        <div class="lib-section">
+          <div class="lib-sec-title">Referências <span class="lib-sec-hint">Clique na imagem para upload • Arraste para reordenar • Use no card de Referência</span></div>
+          <div class="lib-grid" id="lib-grid"></div>
+        </div>
       </div>
 
       <!-- SETTINGS -->
@@ -1745,12 +2183,27 @@
           </div>
         </div>
         <div class="sv-sec">
+          <div class="sv-title">Contas de API (múltiplas chaves)</div>
+          <div style="font-size:10px;color:var(--t3);margin-bottom:8px">Cadastre várias chaves nomeadas (ex: "API Pedro", "API Lucas") e escolha qual usar ao gerar. As chaves ficam salvas só neste navegador — nunca são enviadas para a nuvem.</div>
+          <div id="api-accounts-list"></div>
+          <button class="api-key-add" onclick="addApiAccount()">+ Adicionar conta de API</button>
+        </div>
+        <div class="sv-sec">
           <div class="sv-title">Modelo Padrão</div>
           <select class="sv-input" id="def-model" style="width:auto">
             <option value="gpt-image-2">GPT-Image-2</option>
             <option value="gpt-image-1">GPT-Image-1</option>
             <option value="dall-e-3">DALL-E 3</option>
           </select>
+        </div>
+      </div>
+
+      <!-- PLACEHOLDER (Vídeo / Post) -->
+      <div id="placeholder-view" class="view">
+        <div class="ph-wrap">
+          <div class="ph-icon" id="ph-icon"></div>
+          <div class="ph-title" id="ph-title"></div>
+          <div class="ph-sub">Em construção — em breve</div>
         </div>
       </div>
     </div>
@@ -1780,6 +2233,20 @@
     <button id="add-btn" onclick="document.getElementById('add-menu').classList.toggle('open')">+</button>
   </div>
 
+  <!-- BIBLIOTECA DE REFERÊNCIAS (modal picker) -->
+  <div id="ref-lib-modal" class="modal-overlay" onclick="if(event.target===this)closeRefLibModal()">
+    <div class="modal-box">
+      <div class="modal-hdr">
+        <div class="lib-tabs">
+          <button class="lib-tab" data-mtab="styles" onclick="switchLibModalTab('styles',this)">Estilos</button>
+          <button class="lib-tab on" data-mtab="refs" onclick="switchLibModalTab('refs',this)">Referências</button>
+        </div>
+        <button class="modal-close" onclick="closeRefLibModal()">×</button>
+      </div>
+      <div id="ref-lib-modal-body" class="modal-body"></div>
+    </div>
+  </div>
+
   <!-- TEMP LINE -->
   <svg id="temp-svg">
     <line id="temp-line" x1="-1" y1="-1" x2="-1" y2="-1" stroke="#555" stroke-width="1.2" stroke-dasharray="5,3" />
@@ -1799,11 +2266,18 @@
     let logEntries = [];
     let genImgs = {};
     let abortControllers = {};
+    let genTimers = {};
     let genAllAbort = false;
     let libItems = [];
     let libDragIdx = null;
     let workflows = [{ id: 'wf1', name: 'Workflow 1', cards: {}, conns: [], pan: { x: 0, y: 0 }, scale: 1 }];
     let currentWf = 'wf1';
+    let galleryItems = [];      // { gid, cardId, url, date, ts } — full generation history
+    let styleItems = [];        // { name, img, prompt } — biblioteca de estilos
+    let refLibTarget = null;    // card de referência alvo do modal de biblioteca
+    let refLibTab = 'refs';     // aba ativa no modal de biblioteca de referências
+    let apiAccounts = [];       // { id, name, key, status: 'green'|'yellow'|'red' }
+    let activeApiId = null;     // conta de API selecionada para "Gerar todos"
 
     const canvas = document.getElementById('canvas');
     const svgBack = document.getElementById('svg-back');
@@ -1811,6 +2285,41 @@
     const tempLine = document.getElementById('temp-line');
 
     function uid() { return uidCounter++ }
+    // Evita colisão de IDs entre cards salvos e novos cards criados na sessão
+    // (causa de corrupção de estado / conexões "perdidas" após F5)
+    function bumpUid(ids) {
+      ids.forEach(s => {
+        const m = /_(\d+)$/.exec(String(s || ''));
+        if (m) { const n = parseInt(m[1], 10); if (n >= uidCounter) uidCounter = n + 1; }
+      });
+    }
+
+    function fmtDuration(ms) {
+      const s = Math.floor(ms / 1000);
+      const m = Math.floor(s / 60);
+      const r = s % 60;
+      return m > 0 ? `${m}m ${String(r).padStart(2, '0')}s` : `${r}s`;
+    }
+    function startGenTimer(id) {
+      stopGenTimer(id);
+      const start = Date.now();
+      const el = document.getElementById('cr-timer-' + id);
+      if (el) { el.classList.remove('done'); el.textContent = '0s'; }
+      genTimers[id] = setInterval(() => {
+        const el = document.getElementById('cr-timer-' + id);
+        if (el) el.textContent = fmtDuration(Date.now() - start);
+      }, 1000);
+      genTimers[id + '_start'] = start;
+    }
+    function stopGenTimer(id, finalize) {
+      if (genTimers[id]) { clearInterval(genTimers[id]); delete genTimers[id]; }
+      if (finalize) {
+        const start = genTimers[id + '_start'];
+        const el = document.getElementById('cr-timer-' + id);
+        if (el && start) { el.textContent = fmtDuration(Date.now() - start); el.classList.add('done'); }
+      }
+      delete genTimers[id + '_start'];
+    }
 
     /* ═══ TRANSFORM ═══ */
     function applyTransform() {
@@ -2177,8 +2686,7 @@
     <div class="id-sec-hdr"><div class="id-sec-label">Fontes</div>${tgl('fonts')}</div>
     <div id="id-sc-fonts-${id}"${!on('fonts') ? ' class="id-sc-off"' : ''}>
       <div id="id-fonts-${id}" class="id-chips">
-        ${(data.fonts || ['Syne', 'DM Mono']).map(f => `<div class="id-chip" style="font-family:'${f}'">${f}</div>`).join('')}
-        <div class="id-chip-add" onclick="addIdFont('${id}')">+ fonte</div>
+        ${fontsChipsHtml(id, data.fonts || ['Syne', 'DM Mono'])}
       </div>
     </div>
   </div>
@@ -2187,8 +2695,7 @@
     <div class="id-sec-hdr"><div class="id-sec-label">Paleta de Cores</div>${tgl('colors')}</div>
     <div id="id-sc-colors-${id}"${!on('colors') ? ' class="id-sc-off"' : ''}>
       <div id="id-colors-${id}" class="id-colors">
-        ${(data.colors || ['#e0e0e0', '#1a1a1a', '#666666']).map(c => `<div class="id-swatch" style="background:${c}" title="${c}"></div>`).join('')}
-        <div class="id-swatch-add" onclick="addIdColor('${id}')">+</div>
+        ${colorSwatchesHtml(id, data.colors || ['#e0e0e0', '#1a1a1a', '#666666'])}
       </div>
     </div>
   </div>
@@ -2221,6 +2728,7 @@
       return `
   <div class="cr-handle" data-handle>
     <span class="cr-lbl">Resultado</span>
+    <span class="cr-timer" id="cr-timer-${id}"></span>
     <span class="cr-model" id="cr-mdl-${id}">${document.getElementById('def-model')?.value || 'dall-e-3'}</span>
   </div>
   <div class="cr-body">
@@ -2260,17 +2768,26 @@
     }
 
     function buildRef(id, data) {
+      const styleOpts = styleItems.map(s => `<option value="${s.name}"${data.style === s.name ? ' selected' : ''}>${s.name}</option>`).join('');
       return `
   <div class="ref-handle" data-handle>
     <span class="ref-lbl">Referência</span>
   </div>
   <div class="ref-body">
-    <label style="cursor:pointer;display:block">
-      <div id="ref-box-${id}" class="ref-upload-box">
-        ${data.refUrl ? `<img src="${data.refUrl}">` : `<span style="font-size:16px;color:var(--t4)">⊕</span><span style="font-size:9px;color:var(--t4)">Upload imagem</span>`}
-      </div>
-      <input type="file" accept="image/*" style="display:none" onchange="handleRef(event,'${id}')">
-    </label>
+    <div style="position:relative">
+      <label style="cursor:pointer;display:block">
+        <div id="ref-box-${id}" class="ref-upload-box">
+          ${data.refUrl ? `<img src="${data.refUrl}">` : `<span style="font-size:16px;color:var(--t4)">⊕</span><span style="font-size:9px;color:var(--t4)">Upload imagem</span>`}
+        </div>
+        <input type="file" accept="image/*" style="display:none" onchange="handleRef(event,'${id}')">
+      </label>
+      <button class="ref-img-del" id="ref-del-${id}" style="display:${data.refUrl ? 'flex' : 'none'}" onclick="removeRefImg('${id}')" title="Remover imagem">×</button>
+    </div>
+    <button class="ref-lib-btn" onclick="openRefLibModal('${id}')">📚 Biblioteca de referências</button>
+    <select class="ref-style-sel" onchange="cards['${id}']&&(cards['${id}'].data.style=this.value);saveCurrentWf()">
+      <option value="">Estilo: nenhum</option>
+      ${styleOpts}
+    </select>
   </div>
   <div class="ref-dot" data-cid="${id}"></div>`;
     }
@@ -2330,24 +2847,61 @@
     function handleRef(e, id) {
       const f = e.target.files[0]; if (!f) return;
       const reader = new FileReader();
-      reader.onload = ev => {
-        const url = ev.target.result;
-        const box = document.getElementById('ref-box-' + id);
-        if (box) box.innerHTML = `<img src="${url}">`;
-        if (cards[id]) cards[id].data.refUrl = url;
-        saveCurrentWf();
-      };
+      reader.onload = ev => { setRefImage(id, ev.target.result); };
       reader.readAsDataURL(f);
+    }
+    function setRefImage(id, url) {
+      const box = document.getElementById('ref-box-' + id);
+      if (box) box.innerHTML = url
+        ? `<img src="${url}">`
+        : `<span style="font-size:16px;color:var(--t4)">⊕</span><span style="font-size:9px;color:var(--t4)">Upload imagem</span>`;
+      const delBtn = document.getElementById('ref-del-' + id);
+      if (delBtn) delBtn.style.display = url ? 'flex' : 'none';
+      if (cards[id]) cards[id].data.refUrl = url;
+      saveCurrentWf();
+    }
+    function removeRefImg(id) {
+      if (!confirm('Remover imagem de referência?')) return;
+      setRefImage(id, '');
+    }
+    function fontsChipsHtml(id, fonts) {
+      return (fonts || []).map((f, i) => `<div class="id-chip" style="font-family:'${f}'">${f}<span class="id-chip-x" onclick="event.stopPropagation();delIdFont('${id}',${i})" title="Remover fonte">×</span></div>`).join('')
+        + `<div class="id-chip-add" onclick="addIdFont('${id}')">+ fonte</div>`;
+    }
+    function colorSwatchesHtml(id, colors) {
+      return (colors || []).map((c, i) => `<div class="id-swatch-wrap"><div class="id-swatch" style="background:${c}" title="${c}"></div><span class="id-swatch-x" onclick="event.stopPropagation();delIdColor('${id}',${i})" title="Remover cor">×</span></div>`).join('')
+        + `<div class="id-swatch-add" onclick="addIdColor('${id}')">+</div>`;
+    }
+    function rebuildIdentitySection(id, section) {
+      const data = cards[id]?.data; if (!data) return;
+      if (section === 'fonts') {
+        const cont = document.getElementById('id-fonts-' + id);
+        if (cont) cont.innerHTML = fontsChipsHtml(id, data.fonts || []);
+      } else if (section === 'colors') {
+        const cont = document.getElementById('id-colors-' + id);
+        if (cont) cont.innerHTML = colorSwatchesHtml(id, data.colors || []);
+      }
+    }
+    function delIdFont(id, idx) {
+      if (!cards[id]) return;
+      cards[id].data.fonts = cards[id].data.fonts || [];
+      cards[id].data.fonts.splice(idx, 1);
+      rebuildIdentitySection(id, 'fonts');
+      saveCurrentWf();
+    }
+    function delIdColor(id, idx) {
+      if (!cards[id]) return;
+      cards[id].data.colors = cards[id].data.colors || [];
+      cards[id].data.colors.splice(idx, 1);
+      rebuildIdentitySection(id, 'colors');
+      saveCurrentWf();
     }
     function addIdFont(id) {
       const name = prompt('Nome da fonte:'); if (!name) return;
-      const cont = document.getElementById('id-fonts-' + id); if (!cont) return;
-      const chip = document.createElement('div');
-      chip.className = 'id-chip'; chip.style.fontFamily = "'" + name + "'"; chip.textContent = name;
-      cont.insertBefore(chip, cont.lastElementChild);
       if (cards[id]) {
         if (!cards[id].data.fonts) cards[id].data.fonts = ['Syne', 'DM Mono'];
         cards[id].data.fonts.push(name);
+        rebuildIdentitySection(id, 'fonts');
         saveCurrentWf();
       }
     }
@@ -2356,14 +2910,11 @@
       inp.style.cssText = 'position:fixed;top:-999px;left:-999px;opacity:0;pointer-events:none';
       document.body.appendChild(inp);
       inp.addEventListener('change', () => {
-        const cont = document.getElementById('id-colors-' + id); if (!cont) return;
-        const sw = document.createElement('div');
-        sw.className = 'id-swatch'; sw.style.background = inp.value; sw.title = inp.value;
-        cont.insertBefore(sw, cont.lastElementChild);
         document.body.removeChild(inp);
         if (cards[id]) {
           if (!cards[id].data.colors) cards[id].data.colors = ['#e0e0e0', '#1a1a1a', '#666666'];
           cards[id].data.colors.push(inp.value);
+          rebuildIdentitySection(id, 'colors');
           saveCurrentWf();
         }
       });
@@ -2386,7 +2937,7 @@
     /* ═══ PROMPT BUILDING ═══ */
     function buildPrompt(id) {
       const linked = conns.filter(c => c.to === id).map(c => cards[c.from]).filter(Boolean);
-      let idParts = [], copyText = '', hasRef = false;
+      let idParts = [], copyText = '', hasRef = false, styleParts = [];
       linked.forEach(src => {
         if (src.type === 'identity') {
           const idKey = Object.keys(cards).find(k => cards[k].type === 'identity');
@@ -2414,14 +2965,22 @@
           }
         }
         if (src.type === 'copy' && src.data?.copy) copyText = src.data.copy;
-        if (src.type === 'ref') hasRef = true;
+        if (src.type === 'ref') {
+          hasRef = true;
+          if (src.data?.style) {
+            const st = styleItems.find(s => s.name === src.data.style);
+            if (st?.prompt) styleParts.push(st.prompt);
+          }
+        }
       });
       const idText = idParts.join('\n');
+      const styleText = styleParts.join('\n');
       const fmt = document.getElementById('cr-f-' + id)?.value || '1024x1024';
       let p = `Crie uma imagem publicitária de alta qualidade, formato ${fmt}.\n\n`;
       if (idText) p += `IDENTIDADE:\n${idText}\n\n`;
       if (copyText) p += `TEXTO DO ANÚNCIO: "${copyText}"\n\n`;
       if (hasRef) p += `Use o estilo visual da imagem de referência como inspiração.\n\n`;
+      if (styleText) p += `ESTILO VISUAL:\n${styleText}\n\n`;
       if (!idText && !copyText && !hasRef) p += `Seja criativo. Resultado profissional e impactante para marketing digital.\n\n`;
       const alterTa = document.querySelector(`#alter-${id} .alter-ta`);
       if (alterTa?.value) p += `AJUSTES: ${alterTa.value}\n\n`;
@@ -2431,7 +2990,7 @@
 
     /* ═══ GENERATION ═══ */
     async function genCard(id, isRegen) {
-      const key = localStorage.getItem('cs_openai_key') || document.getElementById('oai-key').value;
+      const key = getActiveApiKey();
       if (!key) { alert('Configure sua API Key em Configurações.'); return }
 
       const model = document.getElementById('def-model')?.value || 'dall-e-3';
@@ -2456,6 +3015,7 @@
       abortControllers[id] = controller;
 
       if (prev) prev.innerHTML = `<div class="cr-empty-wrap"><div class="cr-empty-icon"><span class="spin" style="font-size:20px">↻</span></div><div class="cr-empty-txt">Gerando...</div></div>`;
+      startGenTimer(id);
       if (genBtn) {
         genBtn.classList.remove('busy');
         genBtn.classList.add('stop');
@@ -2528,6 +3088,7 @@
 
         genImgs[id] = { url: imgSrc, prompt, ts: Date.now() };
         if (prev) prev.innerHTML = `<img src="${imgSrc}">`;
+        stopGenTimer(id, true);
         resetBtn();
         document.getElementById('cr-post-' + id)?.classList.add('show');
         const le = logEntries.find(l => l.id === logId); if (le) { le.status = 'done'; le.text += ' ✓' }
@@ -2535,6 +3096,7 @@
         addToGallery(id, imgSrc);
         saveCurrentWf();
       } catch (err) {
+        stopGenTimer(id);
         if (err.name === 'AbortError') {
           if (prev) prev.innerHTML = `<div class="cr-empty-wrap"><div class="cr-empty-icon" style="color:var(--t4)">■</div><div class="cr-empty-txt">Geração cancelada</div></div>`;
           const le = logEntries.find(l => l.id === logId); if (le) { le.status = 'err'; le.text += ' cancelado' }
@@ -2572,24 +3134,30 @@
       if (btn) { btn.innerHTML = '⚡ Gerar todos'; btn.style.background = ''; btn.style.borderColor = ''; btn.style.color = ''; btn.onclick = genAll; }
     }
 
-    async function dlCard(id) {
-      const d = genImgs[id]; if (!d?.url) { alert('Nenhuma imagem gerada ainda.'); return }
-
+    async function dlUrl(url, filename) {
       try {
-        const res = await fetch(d.url);
+        const res = await fetch(url);
         const blob = await res.blob();
         const localUrl = URL.createObjectURL(blob);
-        const a = document.createElement('a'); a.href = localUrl; a.download = `criativo_${id}_${Date.now()}.png`;
+        const a = document.createElement('a'); a.href = localUrl; a.download = filename;
         document.body.appendChild(a); a.click(); document.body.removeChild(a);
         setTimeout(() => URL.revokeObjectURL(localUrl), 5000);
       } catch (e) {
         // Fallback para abrir a url (se CORS impedir fetch)
-        const a = document.createElement('a'); a.href = d.url; a.download = `criativo_${id}_${Date.now()}.png`;
+        const a = document.createElement('a'); a.href = url; a.download = filename;
         a.target = '_blank';
         document.body.appendChild(a); a.click(); document.body.removeChild(a);
       }
     }
-    function dlAll() { Object.keys(genImgs).forEach((id, i) => setTimeout(() => dlCard(id), i * 600)) }
+    function dlCard(id) {
+      const d = genImgs[id]; if (!d?.url) { alert('Nenhuma imagem gerada ainda.'); return }
+      dlUrl(d.url, `criativo_${id}_${Date.now()}.png`);
+    }
+    function dlGalleryItem(gid) {
+      const it = galleryItems.find(g => g.gid === gid); if (!it) return;
+      dlUrl(it.url, `criativo_${it.cardId}_${it.ts}.png`);
+    }
+    function dlAll() { galleryItems.forEach((it, i) => setTimeout(() => dlGalleryItem(it.gid), i * 600)) }
     function toggleAlter(id) { document.getElementById('alter-' + id)?.classList.toggle('open') }
 
     /* ═══ SAVE / LOAD PROJECT ═══ */
@@ -2650,12 +3218,19 @@
     }
 
     /* ═══ GALLERY ═══ */
-    function addToGallery(id, url) {
+    function addToGallery(cardId, url) {
+      const gid = 'g_' + uid();
+      galleryItems.unshift({ gid, cardId, url, date: new Date().toLocaleDateString('pt-BR'), ts: Date.now() });
+      if (galleryItems.length > 80) galleryItems.length = 80; // limita tamanho salvo localmente
+      renderGallery();
+    }
+    function renderGallery() {
       const grid = document.getElementById('gv-grid'); if (!grid) return;
-      const date = new Date().toLocaleDateString('pt-BR');
-      const ex = grid.querySelector(`[data-gid="${id}"]`);
-      const html = `<div class="gv-card" data-gid="${id}"><img class="gv-img" src="${url}"><div class="gv-info"><div class="gv-name">Criativo ${id.split('_')[1] || id}</div><div class="gv-date">${date}</div><button class="gv-dl" onclick="dlCard('${id}')">⬇ Baixar</button></div></div>`;
-      if (ex) ex.outerHTML = html; else grid.insertAdjacentHTML('afterbegin', html);
+      if (!galleryItems.length) {
+        grid.innerHTML = '<div class="log-empty"><span style="font-size:24px;color:var(--t4)">◈</span><span>Nenhum criativo gerado ainda</span></div>';
+        return;
+      }
+      grid.innerHTML = galleryItems.map(it => `<div class="gv-card" data-gid="${it.gid}"><img class="gv-img" src="${it.url}"><div class="gv-info"><div class="gv-name">Criativo ${it.cardId}</div><div class="gv-date">${it.date}</div><button class="gv-dl" onclick="dlGalleryItem('${it.gid}')">⬇ Baixar</button></div></div>`).join('');
     }
 
     /* ═══ LIBRARY ═══ */
@@ -2702,7 +3277,91 @@
       };
       reader.readAsDataURL(f);
     }
-    function delLibItem(idx) { if (confirm('Remover?')) { libItems.splice(idx, 1); renderLib() } }
+    function delLibItem(idx) { if (confirm('Remover?')) { libItems.splice(idx, 1); renderLib(); saveCurrentWf() } }
+
+    /* ═══ BIBLIOTECA: ABA ESTILOS ═══ */
+    function renderStyleLib() {
+      const grid = document.getElementById('style-grid'); if (!grid) return;
+      grid.innerHTML = '';
+      styleItems.forEach((item, i) => {
+        const card = document.createElement('div');
+        card.className = 'style-card';
+        card.innerHTML = `
+      <button class="lib-del" onclick="event.stopPropagation();delStyleItem(${i})">×</button>
+      <label class="style-card-img-area">
+        ${item.img ? `<img src="${item.img}">` : `<div class="style-card-img-empty">⊕</div>`}
+        <input type="file" accept="image/*" style="display:none" onchange="styleImgUpload(event,${i})">
+      </label>
+      <div class="style-card-body">
+        <input class="style-name-input" value="${(item.name || '').replace(/"/g, '&quot;')}" placeholder="Nome do estilo"
+          oninput="styleItems[${i}].name=this.value;saveCurrentWf()">
+        <textarea class="style-prompt-ta" rows="3" placeholder="Prompt do estilo (será adicionado à geração)..."
+          oninput="styleItems[${i}].prompt=this.value;saveCurrentWf()">${item.prompt || ''}</textarea>
+      </div>`;
+        grid.appendChild(card);
+      });
+      const addBtn = document.createElement('div');
+      addBtn.className = 'lib-add-card'; addBtn.textContent = '+';
+      addBtn.onclick = () => { styleItems.push({ name: 'Novo estilo', img: '', prompt: '' }); renderStyleLib(); saveCurrentWf() };
+      grid.appendChild(addBtn);
+    }
+    function styleImgUpload(e, idx) {
+      const f = e.target.files[0]; if (!f) return;
+      const reader = new FileReader();
+      reader.onload = ev => { styleItems[idx].img = ev.target.result; renderStyleLib(); saveCurrentWf() };
+      reader.readAsDataURL(f);
+    }
+    function delStyleItem(idx) { if (confirm('Remover este estilo?')) { styleItems.splice(idx, 1); renderStyleLib(); saveCurrentWf() } }
+
+    /* ═══ BIBLIOTECA DE REFERÊNCIAS (modal do card) ═══ */
+    function openRefLibModal(cardId) {
+      refLibTarget = cardId;
+      refLibTab = 'refs';
+      document.querySelectorAll('#ref-lib-modal .lib-tab').forEach(b => b.classList.toggle('on', b.dataset.mtab === 'refs'));
+      renderRefLibModal();
+      document.getElementById('ref-lib-modal').classList.add('open');
+    }
+    function closeRefLibModal() {
+      document.getElementById('ref-lib-modal').classList.remove('open');
+      refLibTarget = null;
+    }
+    function switchLibModalTab(tab, btn) {
+      refLibTab = tab;
+      document.querySelectorAll('#ref-lib-modal .lib-tab').forEach(b => b.classList.remove('on'));
+      btn.classList.add('on');
+      renderRefLibModal();
+    }
+    function renderRefLibModal() {
+      const body = document.getElementById('ref-lib-modal-body'); if (!body) return;
+      if (refLibTab === 'styles') {
+        if (!styleItems.length) { body.innerHTML = '<div class="ref-lib-card-empty">Nenhum estilo cadastrado na Biblioteca</div>'; return; }
+        body.innerHTML = styleItems.map((s, i) => `
+          <div class="ref-lib-card" onclick="pickStyleFromLib(${i})">
+            ${s.img ? `<img src="${s.img}">` : `<div class="style-card-img-empty">⊕</div>`}
+            <div class="ref-lib-use">${(s.name || 'Estilo').replace(/</g, '&lt;')}</div>
+          </div>`).join('');
+      } else {
+        if (!libItems.length) { body.innerHTML = '<div class="ref-lib-card-empty">Nenhuma referência cadastrada na Biblioteca</div>'; return; }
+        body.innerHTML = libItems.map((it, i) => `
+          <div class="ref-lib-card" onclick="pickRefFromLib(${i})">
+            <img src="${it.img || it.url || ''}">
+            <div class="ref-lib-use">Usar esta imagem</div>
+          </div>`).join('');
+      }
+    }
+    function pickRefFromLib(idx) {
+      const it = libItems[idx]; if (!it || !refLibTarget) return;
+      setRefImage(refLibTarget, it.img || it.url || '');
+      closeRefLibModal();
+    }
+    function pickStyleFromLib(idx) {
+      const s = styleItems[idx]; if (!s || !refLibTarget) return;
+      if (cards[refLibTarget]) cards[refLibTarget].data.style = s.name;
+      const sel = document.querySelector(`#card-${refLibTarget} .ref-style-sel`);
+      if (sel) sel.value = s.name;
+      saveCurrentWf();
+      closeRefLibModal();
+    }
 
     /* ═══ WORKFLOWS ═══ */
     function renderWfList() {
@@ -2737,7 +3396,9 @@
         setSyncStatus('saving');
         try {
           const payload = JSON.stringify({
-            workflows, currentWf, libItems,
+            workflows, currentWf, libItems, styleItems,
+            galleryItems, logEntries: logEntries.slice(0, 80),
+            // apiAccounts NUNCA é enviado — contém chaves de API e o blob é público
             ts: Date.now()
           });
           const r = await fetch('/api/sync', {
@@ -2778,10 +3439,17 @@
         localStorage.setItem('CA_workflows', JSON.stringify(workflows));
         localStorage.setItem('CA_current_wf', currentWf);
         localStorage.setItem('CA_libItems', JSON.stringify(libItems));
+        localStorage.setItem('CA_styleItems', JSON.stringify(styleItems));
         localStorage.setItem('CA_ts', String(Date.now()));
         // genImgs (base64) kept in memory only — too large for localStorage
       } catch (e) {
         console.warn('Falha ao salvar estado:', e);
+      }
+      try {
+        localStorage.setItem('CA_gallery', JSON.stringify(galleryItems));
+        localStorage.setItem('CA_log', JSON.stringify(logEntries.slice(0, 80)));
+      } catch (e) {
+        console.warn('Falha ao salvar galeria/log (limite de armazenamento):', e);
       }
       cloudPush();
     }
@@ -2797,6 +3465,9 @@
           .forEach(([cid, c]) => spawnCard(c.type, c.x, c.y, cid, c.data));
       }
       conns = (wf.conns || []).map(c => ({ ...c }));
+      // Garante que novos cards/conexões criados nesta sessão não reaproveitem
+      // IDs já usados pelo workflow carregado (evita sobrescrever cards/conexões)
+      bumpUid([...Object.keys(wf.cards || {}), ...conns.map(c => c.id)]);
       setTimeout(() => drawLines(), 80);
     }
     function switchWf(id) {
@@ -2809,6 +3480,8 @@
       const id = 'wf_' + uid();
       workflows.push({ id, name, cards: {}, conns: [], pan: { x: 0, y: 0 }, scale: 1 });
       switchWf(id);
+      seedDefaultLayout();
+      saveCurrentWf();
       document.getElementById('wf-drop').classList.remove('open');
     }
     function renameWf(id) {
@@ -2833,18 +3506,59 @@
 
     /* ═══ NAV ═══ */
     function nav(viewName, btn) {
-      document.querySelectorAll('.sb-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.sb-item').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.sb-hdr').forEach(b => b.classList.remove('active'));
       document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
-      btn.classList.add('active');
+      if (btn) {
+        btn.classList.add('active');
+        const hdr = btn.closest('.sb-group')?.querySelector('.sb-hdr');
+        if (hdr) hdr.classList.add('active');
+      }
       document.getElementById(viewName + '-view').classList.add('active');
       if (viewName === 'log') renderLog();
-      if (viewName === 'library') renderLib();
+      if (viewName === 'gallery') renderGallery();
+      if (viewName === 'library') { renderStyleLib(); renderLib(); }
+    }
+
+    /* ═══ CATEGORY TABS (Imagem / Vídeo / Post / Configurações) ═══ */
+    const CAT_INFO = {
+      video: { color: '#e0617a', label: 'Vídeo', svg: '<svg viewBox="0 0 24 24"><rect x="3" y="5" width="13" height="14" rx="2"/><path d="M16 9.5l5-3v11l-5-3z"/></svg>' },
+      post:  { color: '#54c08a', label: 'Post',  svg: '<svg viewBox="0 0 24 24"><rect x="4" y="2" width="16" height="20" rx="3"/><path d="M9 7h6M9 11h6M9 15h3"/></svg>' }
+    };
+    function showPlaceholder(cat) {
+      document.querySelectorAll('.sb-item').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+      document.getElementById('placeholder-view').classList.add('active');
+      const info = CAT_INFO[cat]; if (!info) return;
+      const icon = document.getElementById('ph-icon');
+      icon.innerHTML = info.svg;
+      icon.style.color = info.color;
+      icon.style.borderColor = info.color;
+      const title = document.getElementById('ph-title');
+      title.textContent = info.label;
+      title.style.color = info.color;
+    }
+    function switchCat(cat, btn) {
+      document.querySelectorAll('.sb-hdr').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      if (cat === 'imagem') {
+        const items = btn.closest('.sb-group').querySelector('.sb-items');
+        nav('board', items.querySelector('.sb-item'));
+      } else if (cat === 'config') {
+        document.querySelectorAll('.sb-item').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+        document.getElementById('settings-view').classList.add('active');
+      } else {
+        showPlaceholder(cat);
+      }
     }
     function closeAdd() { document.getElementById('add-menu').classList.remove('open') }
     document.addEventListener('click', e => {
       if (!e.target.closest('#add-wrap')) closeAdd();
       if (!e.target.closest('#wf-drop') && !e.target.closest('#wf-btn'))
         document.getElementById('wf-drop').classList.remove('open');
+      if (!e.target.closest('#api-status-wrap'))
+        document.getElementById('api-status-drop')?.classList.remove('open');
     });
 
     /* ═══ GALLERY FILTER ═══ */
@@ -2882,51 +3596,98 @@
       if (stat) { stat.textContent = '● Configurada'; stat.className = 'sv-stat ok' }
     }
 
-    /* ═══ INIT ═══ */
-    function applyState(data) {
-      if (data.workflows) workflows = data.workflows;
-      if (data.libItems) libItems = data.libItems;
-      const cwf = data.currentWf || workflows[0]?.id || 'wf1';
-      currentWf = cwf;
-      loadWf(cwf);
-      document.getElementById('wf-name').textContent = workflows.find(w => w.id === cwf)?.name || '';
-      renderWfList();
-      renderLib();
+    /* ═══ CONTAS DE API (múltiplas chaves) ═══ */
+    function saveApiAccounts() {
+      try { localStorage.setItem('CA_apiAccounts', JSON.stringify(apiAccounts)); } catch (e) {}
+      try { localStorage.setItem('CA_activeApiId', activeApiId || ''); } catch (e) {}
     }
-    async function initDefault() {
-      // Try cloud first, then localStorage, then default layout
-      const localTs = parseInt(localStorage.getItem('CA_ts') || '0');
-
-      const cloud = await cloudLoad();
-      if (cloud && cloud.workflows && (cloud.ts || 0) >= localTs) {
-        // Cloud state is newer or same — use it
-        localStorage.setItem('CA_ts', String(cloud.ts || Date.now()));
-        applyState(cloud);
-        setSyncStatus('ok');
-        return;
-      }
-
-      // Fall back to localStorage
+    function loadApiAccounts() {
+      try { apiAccounts = JSON.parse(localStorage.getItem('CA_apiAccounts') || '[]'); } catch (e) { apiAccounts = []; }
+      activeApiId = localStorage.getItem('CA_activeApiId') || null;
+      if (!activeApiId && apiAccounts.length) activeApiId = apiAccounts[0].id;
+    }
+    function renderApiAccounts() {
+      const wrap = document.getElementById('api-accounts-list'); if (!wrap) return;
+      if (!apiAccounts.length) { wrap.innerHTML = '<div style="font-size:10px;color:var(--t4);padding:6px 0">Nenhuma conta cadastrada ainda.</div>'; return; }
+      wrap.innerHTML = apiAccounts.map(acc => `
+        <div class="api-key-row">
+          <input class="api-key-name" value="${(acc.name || '').replace(/"/g, '&quot;')}" placeholder="Nome da conta"
+            oninput="renameApiAccount('${acc.id}',this.value)">
+          <input class="api-key-input" type="password" value="${(acc.key || '').replace(/"/g, '&quot;')}" placeholder="sk-..."
+            oninput="setApiAccountKey('${acc.id}',this.value)">
+          <span class="api-led led-${acc.status || 'yellow'}" title="${acc.status === 'green' ? 'Funcionando' : acc.status === 'red' ? 'Não ativada' : 'Não testada'}"></span>
+          <button class="sv-save" style="margin:0;padding:6px 10px;font-size:10px" onclick="testApiAccount('${acc.id}')">Testar</button>
+          <button class="api-key-del" onclick="delApiAccount('${acc.id}')" title="Remover">×</button>
+        </div>`).join('');
+    }
+    function addApiAccount() {
+      const acc = { id: 'api_' + uid(), name: `Conta ${apiAccounts.length + 1}`, key: '', status: 'yellow' };
+      apiAccounts.push(acc);
+      if (!activeApiId) activeApiId = acc.id;
+      saveApiAccounts(); renderApiAccounts(); refreshGenApiSelect(); refreshApiStatusWidget();
+    }
+    function renameApiAccount(id, name) {
+      const acc = apiAccounts.find(a => a.id === id); if (!acc) return;
+      acc.name = name; saveApiAccounts(); refreshGenApiSelect(); refreshApiStatusWidget();
+    }
+    function setApiAccountKey(id, key) {
+      const acc = apiAccounts.find(a => a.id === id); if (!acc) return;
+      acc.key = key; acc.status = key ? 'yellow' : 'red';
+      saveApiAccounts(); renderApiAccounts(); refreshApiStatusWidget();
+    }
+    function delApiAccount(id) {
+      if (!confirm('Remover esta conta de API?')) return;
+      apiAccounts = apiAccounts.filter(a => a.id !== id);
+      if (activeApiId === id) activeApiId = apiAccounts[0]?.id || null;
+      saveApiAccounts(); renderApiAccounts(); refreshGenApiSelect(); refreshApiStatusWidget();
+    }
+    async function testApiAccount(id) {
+      const acc = apiAccounts.find(a => a.id === id); if (!acc) return;
+      if (!acc.key) { acc.status = 'red'; saveApiAccounts(); renderApiAccounts(); refreshApiStatusWidget(); return; }
+      acc.status = 'yellow'; renderApiAccounts();
       try {
-        const savedWfs = localStorage.getItem('CA_workflows');
-        const savedLib = localStorage.getItem('CA_libItems');
-
-        if (savedWfs) workflows = JSON.parse(savedWfs);
-        if (savedLib) libItems = JSON.parse(savedLib);
-
-        if (savedWfs) {
-          const cwf = localStorage.getItem('CA_current_wf') || workflows[0].id;
-          currentWf = cwf;
-          loadWf(cwf);
-          document.getElementById('wf-name').textContent = workflows.find(w => w.id === cwf)?.name || '';
-          renderWfList();
-          renderLib();
-          setSyncStatus(cloud === null ? 'err' : 'ok');
-          return;
+        const res = await fetch('https://api.openai.com/v1/models', { headers: { 'Authorization': 'Bearer ' + acc.key } });
+        acc.status = res.ok ? 'green' : 'red';
+      } catch (e) { acc.status = 'red'; }
+      saveApiAccounts(); renderApiAccounts(); refreshApiStatusWidget();
+    }
+    function refreshGenApiSelect() {
+      const sel = document.getElementById('gen-api-sel'); if (!sel) return;
+      if (!apiAccounts.length) { sel.style.display = 'none'; sel.innerHTML = ''; return; }
+      sel.style.display = '';
+      sel.innerHTML = apiAccounts.map(a => `<option value="${a.id}"${a.id === activeApiId ? ' selected' : ''}>${(a.name || 'Conta').replace(/</g, '&lt;')}</option>`).join('');
+    }
+    function setActiveApiKey(id) {
+      activeApiId = id; saveApiAccounts(); refreshApiStatusWidget();
+    }
+    function getActiveApiKey() {
+      const acc = apiAccounts.find(a => a.id === activeApiId);
+      if (acc?.key) return acc.key;
+      return localStorage.getItem('cs_openai_key') || document.getElementById('oai-key')?.value || '';
+    }
+    function refreshApiStatusWidget() {
+      const dot = document.getElementById('api-status-dot');
+      const list = document.getElementById('api-status-list');
+      const acc = apiAccounts.find(a => a.id === activeApiId);
+      let status = 'yellow';
+      if (acc) status = acc.status || 'yellow';
+      else if (localStorage.getItem('cs_openai_key')) status = 'yellow';
+      else status = 'red';
+      if (dot) dot.className = 'api-led led-' + status;
+      if (list) {
+        if (!apiAccounts.length) {
+          list.innerHTML = '<div class="asd-row"><span class="asd-name">Chave única (Configurações)</span><span class="asd-state">' + (localStorage.getItem('cs_openai_key') ? '🟡 configurada' : '🔴 não configurada') + '</span></div>';
+        } else {
+          list.innerHTML = apiAccounts.map(a => `<div class="asd-row"><span class="asd-name">${(a.name || 'Conta').replace(/</g, '&lt;')}${a.id === activeApiId ? ' (ativa)' : ''}</span><span class="asd-state">${a.status === 'green' ? '🟢 funcionando' : a.status === 'red' ? '🔴 não ativada' : '🟡 não testada'}</span></div>`).join('');
         }
-      } catch (e) {}
+      }
+    }
+    function toggleApiStatusDrop() {
+      document.getElementById('api-status-drop')?.classList.toggle('open');
+    }
 
-      // Default layout if completely clean
+    /* ═══ INIT ═══ */
+    function seedDefaultLayout() {
       scale = 0.72; panX = 60; panY = 60;
       applyTransform();
 
@@ -2959,6 +3720,75 @@
       // Connect identity to all results
       resultIds.forEach(rid => addConn(iid, rid));
       drawLines();
+    }
+    function seedDefaultStyles() {
+      styleItems = [
+        { name: 'Realista', img: '', prompt: 'Estilo fotográfico realista: iluminação natural, alta definição, texturas e profundidade reais, como uma fotografia profissional de produto/marketing.' },
+        { name: 'Cartunesco', img: '', prompt: 'Estilo cartunesco/ilustrado: cores vibrantes, contornos definidos, traços estilizados e expressivos, visual lúdico e divertido.' },
+        { name: 'Emocional', img: '', prompt: 'Estilo emocional e sensorial: tons quentes e suaves, composição que transmite sentimento e conexão humana, foco em expressões e atmosfera.' },
+      ];
+    }
+    function applyState(data) {
+      if (data.workflows) workflows = data.workflows;
+      if (data.libItems) libItems = data.libItems;
+      if (data.styleItems) styleItems = data.styleItems;
+      if (data.galleryItems) galleryItems = data.galleryItems;
+      if (data.logEntries) logEntries = data.logEntries;
+      const cwf = data.currentWf || workflows[0]?.id || 'wf1';
+      currentWf = cwf;
+      loadWf(cwf);
+      document.getElementById('wf-name').textContent = workflows.find(w => w.id === cwf)?.name || '';
+      renderWfList();
+      renderLib();
+      if (!styleItems.length) seedDefaultStyles();
+      renderGallery();
+      renderLog();
+    }
+    async function initDefault() {
+      // Try cloud first, then localStorage, then default layout
+      const localTs = parseInt(localStorage.getItem('CA_ts') || '0');
+
+      const cloud = await cloudLoad();
+      if (cloud && cloud.workflows && (cloud.ts || 0) >= localTs) {
+        // Cloud state is newer or same — use it
+        localStorage.setItem('CA_ts', String(cloud.ts || Date.now()));
+        applyState(cloud);
+        setSyncStatus('ok');
+        return;
+      }
+
+      // Fall back to localStorage
+      try {
+        const savedWfs = localStorage.getItem('CA_workflows');
+        const savedLib = localStorage.getItem('CA_libItems');
+        const savedStyles = localStorage.getItem('CA_styleItems');
+        const savedGallery = localStorage.getItem('CA_gallery');
+        const savedLog = localStorage.getItem('CA_log');
+
+        if (savedWfs) workflows = JSON.parse(savedWfs);
+        if (savedLib) libItems = JSON.parse(savedLib);
+        if (savedStyles) styleItems = JSON.parse(savedStyles);
+        if (savedGallery) galleryItems = JSON.parse(savedGallery);
+        if (savedLog) logEntries = JSON.parse(savedLog);
+
+        if (savedWfs) {
+          const cwf = localStorage.getItem('CA_current_wf') || workflows[0].id;
+          currentWf = cwf;
+          loadWf(cwf);
+          document.getElementById('wf-name').textContent = workflows.find(w => w.id === cwf)?.name || '';
+          renderWfList();
+          renderLib();
+          if (!styleItems.length) seedDefaultStyles();
+          renderGallery();
+          renderLog();
+          setSyncStatus(cloud === null ? 'err' : 'ok');
+          return;
+        }
+      } catch (e) {}
+
+      // Default layout if completely clean
+      seedDefaultLayout();
+      seedDefaultStyles();
 
       // Seed library
       libItems = [
@@ -2969,12 +3799,16 @@
         { img: '', text: 'Lighting: luz natural lateral' },
         { img: '', text: 'Mood: profissional e limpo' },
       ];
-      
+
       saveCurrentWf();
     }
 
     // Run after DOM fully ready
     window.addEventListener('load', () => {
+      loadApiAccounts();
+      renderApiAccounts();
+      refreshGenApiSelect();
+      refreshApiStatusWidget();
       initDefault();
     });
   </script>
