@@ -328,7 +328,7 @@
       background: var(--bg)
     }
 
-    /* SVG BEHIND — z-index 1 */
+    /* SVG LINES — above canvas so hover/click events reach the paths */
     #svg-back {
       position: absolute;
       top: 0;
@@ -336,7 +336,7 @@
       width: 4000px;
       height: 4000px;
       pointer-events: none;
-      z-index: 1;
+      z-index: 3;
       transform-origin: 0 0;
       overflow: visible
     }
@@ -2179,7 +2179,7 @@
         </div>
         <div class="sv-sec">
           <div class="sv-title">Modelo Padrão</div>
-          <select class="sv-input" id="def-model" style="width:auto">
+          <select class="sv-input" id="def-model" style="width:auto" onchange="refreshResultCards()">
             <option value="gpt-image-2">GPT-Image-2</option>
             <option value="gpt-image-1">GPT-Image-1</option>
             <option value="dall-e-3">DALL-E 3</option>
@@ -2635,6 +2635,7 @@
 
       // Save after spawning a new card (when user adds from menu, not from loadWf)
       if (!id) saveCurrentWf();
+      if (type === 'result') refreshResultCards();
 
       setTimeout(() => drawLines(), 30);
       return cid;
@@ -2713,12 +2714,101 @@
   <div class="id-dot" data-cid="${id}"></div>`;
     }
 
+    const MODEL_CAPS = {
+      'dall-e-3': {
+        sizes: [
+          { value: '1024x1024', label: 'Quadrado' },
+          { value: '1024x1792', label: 'Stories 9:16' },
+          { value: '1792x1024', label: 'Paisagem 16:9' }
+        ],
+        quality: [
+          { value: 'standard', label: 'Padrão' },
+          { value: 'hd', label: 'HD' }
+        ],
+        maxN: 1
+      },
+      'gpt-image-1': {
+        sizes: [
+          { value: '1024x1024', label: 'Quadrado' },
+          { value: '1024x1536', label: 'Stories 2:3' },
+          { value: '1536x1024', label: 'Paisagem 3:2' }
+        ],
+        quality: [
+          { value: 'low',    label: 'Baixa' },
+          { value: 'medium', label: 'Média' },
+          { value: 'high',   label: 'Alta' }
+        ],
+        maxN: 4
+      },
+      'gpt-image-2': {
+        sizes: [
+          { value: '1024x1024', label: 'Quadrado' },
+          { value: '1024x1536', label: 'Stories 2:3' },
+          { value: '1536x1024', label: 'Paisagem 3:2' }
+        ],
+        quality: [
+          { value: 'low',    label: 'Baixa' },
+          { value: 'medium', label: 'Média' },
+          { value: 'high',   label: 'Alta' }
+        ],
+        maxN: 4
+      }
+    };
+
+    function refreshResultCards() {
+      const model = document.getElementById('def-model')?.value || 'dall-e-3';
+      const caps = MODEL_CAPS[model] || MODEL_CAPS['dall-e-3'];
+      Object.keys(cards).filter(id => cards[id]?.type === 'result').forEach(id => {
+        const mdlEl = document.getElementById('cr-mdl-' + id);
+        if (mdlEl) mdlEl.textContent = model;
+
+        const fmtSel = document.getElementById('cr-f-' + id);
+        if (fmtSel) {
+          const cur = fmtSel.value;
+          fmtSel.innerHTML = caps.sizes.map(s =>
+            `<option value="${s.value}"${s.value === cur ? ' selected' : ''}>${s.label}</option>`
+          ).join('');
+          if (!caps.sizes.find(s => s.value === cur)) fmtSel.value = caps.sizes[0].value;
+        }
+
+        const qlSel = document.getElementById('cr-ql-' + id);
+        if (qlSel) {
+          const cur = qlSel.value;
+          qlSel.innerHTML = caps.quality.map(q =>
+            `<option value="${q.value}"${q.value === cur ? ' selected' : ''}>${q.label}</option>`
+          ).join('');
+          if (!caps.quality.find(q => q.value === cur)) qlSel.value = caps.quality[0].value;
+        }
+
+        const qtySel = document.getElementById('cr-q-' + id);
+        if (qtySel) {
+          const cur = parseInt(qtySel.value) || 1;
+          qtySel.innerHTML = Array.from({ length: caps.maxN }, (_, i) => i + 1)
+            .map(v => `<option${cur === v ? ' selected' : ''}>${v}</option>`).join('');
+          if (cur > caps.maxN) qtySel.value = '1';
+        }
+      });
+    }
+
     function buildResult(id, data) {
+      const model = document.getElementById('def-model')?.value || 'dall-e-3';
+      const caps = MODEL_CAPS[model] || MODEL_CAPS['dall-e-3'];
+      const defFmt = data.fmt || '1024x1024';
+      const defQl  = data.ql  || caps.quality[0].value;
+      const defQty = data.qty || '1';
+      const sizeOpts = caps.sizes.map(s =>
+        `<option value="${s.value}"${s.value === defFmt ? ' selected' : ''}>${s.label}</option>`
+      ).join('');
+      const qualOpts = caps.quality.map(q =>
+        `<option value="${q.value}"${q.value === defQl ? ' selected' : ''}>${q.label}</option>`
+      ).join('');
+      const qtyOpts = Array.from({ length: caps.maxN }, (_, i) => i + 1)
+        .map(v => `<option${defQty === String(v) ? ' selected' : ''}>${v}</option>`).join('');
       return `
   <div class="cr-handle" data-handle>
     <span class="cr-lbl">Resultado</span>
     <span class="cr-timer" id="cr-timer-${id}"></span>
-    <span class="cr-model" id="cr-mdl-${id}">${document.getElementById('def-model')?.value || 'dall-e-3'}</span>
+    <span class="cr-model" id="cr-mdl-${id}">${model}</span>
   </div>
   <div class="cr-body">
     <div class="cr-preview" id="cr-prev-${id}">
@@ -2731,16 +2821,13 @@
     </div>
     <div class="cr-controls">
       <select class="cr-sel" id="cr-q-${id}" onchange="cards['${id}']&&(cards['${id}'].data.qty=this.value);saveCurrentWf()">
-        ${['1','2','3','4'].map(v=>`<option${(data.qty||'1')===v?' selected':''}>${v}</option>`).join('')}
+        ${qtyOpts}
       </select>
       <select class="cr-sel" id="cr-f-${id}" onchange="cards['${id}']&&(cards['${id}'].data.fmt=this.value);saveCurrentWf()">
-        <option value="1024x1024"${(data.fmt||'1024x1024')==='1024x1024'?' selected':''}>Quadrado 1024×1024</option>
-        <option value="1024x1792"${data.fmt==='1024x1792'?' selected':''}>Stories 1024×1792</option>
-        <option value="1792x1024"${data.fmt==='1792x1024'?' selected':''}>Feed FB 1792×1024</option>
+        ${sizeOpts}
       </select>
       <select class="cr-sel" id="cr-ql-${id}" onchange="cards['${id}']&&(cards['${id}'].data.ql=this.value);saveCurrentWf()">
-        <option value="standard"${(data.ql||'standard')==='standard'?' selected':''}>1K</option>
-        <option value="hd"${data.ql==='hd'?' selected':''}>2K</option>
+        ${qualOpts}
       </select>
     </div>
     <button class="cr-gen-btn" id="cr-gen-${id}" onclick="genCard('${id}')">⚡ GERAR</button>
@@ -2996,9 +3083,10 @@
       const fmt = sizeRemap[model]?.[fmtRaw] || fmtRaw;
 
       const qual = document.getElementById('cr-ql-' + id)?.value || 'standard';
-      // gpt-image-1/2 use low/medium/high instead of standard/hd
       const isGptModel = model === 'gpt-image-1' || model === 'gpt-image-2';
-      const apiQuality = isGptModel ? (qual === 'hd' ? 'high' : 'medium') : qual;
+      const apiQuality = isGptModel
+        ? ({ standard: 'medium', hd: 'high', low: 'low', medium: 'medium', high: 'high' }[qual] || 'medium')
+        : qual;
 
       const controller = new AbortController();
       abortControllers[id] = controller;
@@ -3061,7 +3149,8 @@
             ? 'data:image/png;base64,' + data.data[0].b64_json
             : data.data[0].url;
         } else {
-          const body = { model, prompt, n: 1, size: fmt, quality: apiQuality, response_format: 'b64_json' };
+          const body = { model, prompt, n: 1, size: fmt, quality: apiQuality };
+          if (!isGptModel) body.response_format = 'b64_json';
           const res = await fetch('https://api.openai.com/v1/images/generations', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + key },
@@ -3457,7 +3546,7 @@
       // Garante que novos cards/conexões criados nesta sessão não reaproveitem
       // IDs já usados pelo workflow carregado (evita sobrescrever cards/conexões)
       bumpUid([...Object.keys(wf.cards || {}), ...conns.map(c => c.id)]);
-      setTimeout(() => drawLines(), 80);
+      setTimeout(() => { drawLines(); refreshResultCards(); }, 80);
     }
     function switchWf(id) {
       saveCurrentWf(); currentWf = id; loadWf(id);
