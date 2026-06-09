@@ -3016,29 +3016,21 @@
       let idParts = [], copyText = '', hasRef = false, styleParts = [];
       linked.forEach(src => {
         if (src.type === 'identity') {
-          const idKey = Object.keys(cards).find(k => cards[k].type === 'identity');
-          const idEl = idKey ? document.getElementById(idKey) : null;
           const tog = src.data.idToggles || {};
           const on = k => tog[k] !== false;
 
           if (on('prompt')) {
-            const ta = idEl?.querySelector('.id-prompt-ta');
-            if (ta?.value) idParts.push(ta.value);
+            const pt = src.data.promptBase || 'Seguir exatamente a paleta de cores e estilo visual da marca. Usar a logo fornecida. Manter coerência visual com as referências de estilo.';
+            idParts.push(pt);
           }
-          if (on('fonts') && idEl) {
-            const fonts = [...idEl.querySelectorAll('.id-chip')].map(c => c.textContent.trim()).filter(Boolean);
-            if (fonts.length) idParts.push(`Fontes da marca: ${fonts.join(', ')}.`);
-          }
-          if (on('colors') && idEl) {
-            const colors = [...idEl.querySelectorAll('.id-swatch[title]')].map(s => s.title).filter(Boolean);
-            if (colors.length) idParts.push(`Paleta de cores (hex): ${colors.join(', ')}.`);
-          }
-          if (on('logo') && src.data.logoUrl) {
-            idParts.push('Incorporar a logo da marca ao criativo.');
-          }
-          if (on('refs') && src.data.idRefs?.length) {
-            idParts.push(`Referências de identidade: ${src.data.idRefs.map(r => r.name).join(', ')}.`);
-          }
+          if (on('fonts') && src.data.fonts?.length)
+            idParts.push(`Fontes da marca: ${src.data.fonts.join(', ')}.`);
+          if (on('colors') && src.data.colors?.length)
+            idParts.push(`Paleta de cores (hex): ${src.data.colors.join(', ')}.`);
+          if (on('logo') && src.data.logoUrl)
+            idParts.push('Incorporar a logo da marca ao criativo (enviada como imagem de referência).');
+          if (on('refs') && src.data.idRefs?.length)
+            idParts.push(`Referências visuais da identidade (enviadas como imagem): ${src.data.idRefs.map(r => r.name).join(', ')}.`);
         }
         if (src.type === 'copy' && src.data?.copy) copyText = src.data.copy;
         if (src.type === 'ref') {
@@ -3116,21 +3108,35 @@
       try {
         let imgSrc = null;
 
-        // Check for connected reference image
         const linked = conns.filter(c => c.to === id).map(c => cards[c.from]).filter(Boolean);
-        const refCard = linked.find(src => src.type === 'ref' && src.data?.refUrl);
 
-        if (isGptModel && refCard) {
-          const dataUrl = refCard.data.refUrl;
-          const base64 = dataUrl.split(',')[1];
+        // Collect all reference images (identity logo, identity refs, ref cards)
+        const refImages = [];
+        if (isGptModel) {
+          const identitySrc = linked.find(src => src.type === 'identity');
+          if (identitySrc) {
+            if (identitySrc.data?.logoUrl)
+              refImages.push({ url: identitySrc.data.logoUrl, name: 'logo.png' });
+            (identitySrc.data?.idRefs || []).forEach((r, i) =>
+              refImages.push({ url: r.url, name: r.name || `ref${i}.png` })
+            );
+          }
+          linked.filter(src => src.type === 'ref' && src.data?.refUrl)
+            .forEach((rc, i) => refImages.push({ url: rc.data.refUrl, name: `reference${i}.png` }));
+        }
+
+        function dataUrlToBlob(dataUrl) {
+          const b64 = dataUrl.split(',')[1];
           const mime = dataUrl.split(';')[0].split(':')[1] || 'image/png';
-          const bytes = atob(base64);
+          const bytes = atob(b64);
           const arr = new Uint8Array(bytes.length);
           for (let i = 0; i < bytes.length; i++) arr[i] = bytes.charCodeAt(i);
-          const refBlob = new Blob([arr], { type: mime });
+          return new Blob([arr], { type: mime });
+        }
 
+        if (isGptModel && refImages.length > 0) {
           const fd = new FormData();
-          fd.append('image', refBlob, 'reference.png');
+          refImages.forEach(img => fd.append('image', dataUrlToBlob(img.url), img.name));
           fd.append('prompt', prompt);
           fd.append('model', model);
           fd.append('n', '1');
