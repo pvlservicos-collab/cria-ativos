@@ -3115,11 +3115,14 @@
         if (isGptModel) {
           const identitySrc = linked.find(src => src.type === 'identity');
           if (identitySrc) {
-            if (identitySrc.data?.logoUrl)
+            const tog = identitySrc.data.idToggles || {};
+            const on = k => tog[k] !== false;
+            if (on('logo') && identitySrc.data?.logoUrl)
               refImages.push({ url: identitySrc.data.logoUrl, name: 'logo.png' });
-            (identitySrc.data?.idRefs || []).forEach((r, i) =>
-              refImages.push({ url: r.url, name: r.name || `ref${i}.png` })
-            );
+            if (on('refs'))
+              (identitySrc.data?.idRefs || []).forEach((r, i) =>
+                refImages.push({ url: r.url, name: r.name || `ref${i}.png` })
+              );
           }
           linked.filter(src => src.type === 'ref' && src.data?.refUrl)
             .forEach((rc, i) => refImages.push({ url: rc.data.refUrl, name: `reference${i}.png` }));
