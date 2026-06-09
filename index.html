@@ -3139,7 +3139,8 @@
 
         if (isGptModel && refImages.length > 0) {
           const fd = new FormData();
-          refImages.forEach(img => fd.append('image', dataUrlToBlob(img.url), img.name));
+          const imgKey = refImages.length > 1 ? 'image[]' : 'image';
+          refImages.forEach(img => fd.append(imgKey, dataUrlToBlob(img.url), img.name));
           fd.append('prompt', prompt);
           fd.append('model', model);
           fd.append('n', '1');
