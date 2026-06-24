@@ -3509,7 +3509,7 @@
     async function cloudLoad() {
       try {
         const ctrl = new AbortController();
-        const tid = setTimeout(() => ctrl.abort(), 5000);
+        const tid = setTimeout(() => ctrl.abort(), 10000);
         const r = await fetch('/api/sync', { signal: ctrl.signal });
         clearTimeout(tid);
         if (!r.ok) return null;
@@ -3885,6 +3885,7 @@
       } catch (e) {}
 
       if (!hasLocal) {
+        // Mostra layout padrão TEMPORÁRIO — será substituído se a nuvem tiver dados
         seedDefaultLayout();
         seedDefaultStyles();
         libItems = [
@@ -3895,17 +3896,22 @@
           { img: '', text: 'Lighting: luz natural lateral' },
           { img: '', text: 'Mood: profissional e limpo' },
         ];
-        saveCurrentWf();
+        // NÃO chama saveCurrentWf() aqui: evita sobrescrever dados na nuvem
+        // com o layout padrão caso o cloudLoad ainda não tenha respondido
       }
 
-      // ── 2. Cloud sync in background — cloudLoad has 5s timeout built-in ──
+      // ── 2. Cloud sync — 10s timeout cobre cold-starts do Vercel ──
       setSyncStatus('saving');
       const cloud = await cloudLoad();
       if (cloud && cloud.workflows && (cloud.ts || 0) > localTs) {
         localStorage.setItem('CA_ts', String(cloud.ts));
         applyState(cloud);
+        setSyncStatus('ok');
+      } else {
+        setSyncStatus(cloud ? 'ok' : 'err');
+        // Só inicializa a nuvem com layout padrão se não havia dados em nenhum lugar
+        if (!hasLocal && !cloud) saveCurrentWf();
       }
-      setSyncStatus(cloud ? 'ok' : 'err');
     }
 
     // Run after DOM fully ready
