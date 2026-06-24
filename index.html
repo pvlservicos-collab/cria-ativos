@@ -2236,6 +2236,15 @@
     const tempLine = document.getElementById('temp-line');
 
     function uid() { return uidCounter++ }
+    function restoreGenImgs() {
+      // Repopula genImgs do histórico da galeria para que os previews dos cards
+      // reapareçam ao recarregar a página (o mais recente por card)
+      galleryItems.forEach(it => {
+        if (it.cardId && it.url && !genImgs[it.cardId]) {
+          genImgs[it.cardId] = { url: it.url, prompt: '', ts: it.ts || 0 };
+        }
+      });
+    }
     // Evita colisão de IDs entre cards salvos e novos cards criados na sessão
     // (causa de corrupção de estado / conexões "perdidas" após F5)
     function bumpUid(ids) {
@@ -3143,7 +3152,8 @@
             : data.data[0].url;
         }
 
-        genImgs[id] = { url: imgSrc, prompt, ts: Date.now() };
+        const genTs = Date.now();
+        genImgs[id] = { url: imgSrc, prompt, ts: genTs };
         if (prev) prev.innerHTML = `<img src="${imgSrc}">`;
         stopGenTimer(id, true);
         resetBtn();
@@ -3152,6 +3162,32 @@
         renderLog();
         addToGallery(id, imgSrc);
         saveCurrentWf();
+
+        // Upload para Vercel Blob em background — substitui base64 por URL permanente
+        if (imgSrc.startsWith('data:')) {
+          (async () => {
+            try {
+              const ctrl = new AbortController();
+              setTimeout(() => ctrl.abort(), 20000);
+              const up = await fetch('/api/upload-image', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ imageData: imgSrc, filename: `img_${id}_${genTs}.png` }),
+                signal: ctrl.signal
+              });
+              if (up.ok) {
+                const { url: blobUrl } = await up.json();
+                if (blobUrl) {
+                  genImgs[id].url = blobUrl;
+                  if (prev) prev.querySelector('img')?.setAttribute('src', blobUrl);
+                  const gi = galleryItems.find(g => g.cardId === id && g.ts === genTs);
+                  if (gi) gi.url = blobUrl;
+                  saveCurrentWf();
+                }
+              }
+            } catch (_) {}
+          })();
+        }
       } catch (err) {
         stopGenTimer(id);
         if (err.name === 'AbortError') {
@@ -3472,7 +3508,10 @@
     }
     async function cloudLoad() {
       try {
-        const r = await fetch('/api/sync');
+        const ctrl = new AbortController();
+        const tid = setTimeout(() => ctrl.abort(), 5000);
+        const r = await fetch('/api/sync', { signal: ctrl.signal });
+        clearTimeout(tid);
         if (!r.ok) return null;
         const data = await r.json();
         if (!data || !data.workflows) return null;
@@ -3803,6 +3842,7 @@
       if (data.styleItems) styleItems = data.styleItems;
       if (data.galleryItems) galleryItems = data.galleryItems;
       if (data.logEntries) logEntries = data.logEntries;
+      restoreGenImgs();
       const cwf = data.currentWf || workflows[0]?.id || 'wf1';
       currentWf = cwf;
       loadWf(cwf);
@@ -3814,33 +3854,23 @@
       renderLog();
     }
     async function initDefault() {
-      // Try cloud first, then localStorage, then default layout
       const localTs = parseInt(localStorage.getItem('CA_ts') || '0');
 
-      const cloud = await cloudLoad();
-      if (cloud && cloud.workflows && (cloud.ts || 0) >= localTs) {
-        // Cloud state is newer or same — use it
-        localStorage.setItem('CA_ts', String(cloud.ts || Date.now()));
-        applyState(cloud);
-        setSyncStatus('ok');
-        return;
-      }
-
-      // Fall back to localStorage
+      // ── 1. Render from localStorage immediately — never block UI on network ──
+      let hasLocal = false;
       try {
         const savedWfs = localStorage.getItem('CA_workflows');
-        const savedLib = localStorage.getItem('CA_libItems');
-        const savedStyles = localStorage.getItem('CA_styleItems');
-        const savedGallery = localStorage.getItem('CA_gallery');
-        const savedLog = localStorage.getItem('CA_log');
-
-        if (savedWfs) workflows = JSON.parse(savedWfs);
-        if (savedLib) libItems = JSON.parse(savedLib);
-        if (savedStyles) styleItems = JSON.parse(savedStyles);
-        if (savedGallery) galleryItems = JSON.parse(savedGallery);
-        if (savedLog) logEntries = JSON.parse(savedLog);
-
         if (savedWfs) {
+          workflows = JSON.parse(savedWfs);
+          const savedLib    = localStorage.getItem('CA_libItems');
+          const savedStyles = localStorage.getItem('CA_styleItems');
+          const savedGallery = localStorage.getItem('CA_gallery');
+          const savedLog    = localStorage.getItem('CA_log');
+          if (savedLib)     libItems      = JSON.parse(savedLib);
+          if (savedStyles)  styleItems    = JSON.parse(savedStyles);
+          if (savedGallery) galleryItems  = JSON.parse(savedGallery);
+          if (savedLog)     logEntries    = JSON.parse(savedLog);
+          restoreGenImgs();   // popula genImgs antes de loadWf para os previews aparecerem
           const cwf = localStorage.getItem('CA_current_wf') || workflows[0].id;
           currentWf = cwf;
           loadWf(cwf);
@@ -3850,26 +3880,32 @@
           if (!styleItems.length) seedDefaultStyles();
           renderGallery();
           renderLog();
-          setSyncStatus(cloud === null ? 'err' : 'ok');
-          return;
+          hasLocal = true;
         }
       } catch (e) {}
 
-      // Default layout if completely clean
-      seedDefaultLayout();
-      seedDefaultStyles();
+      if (!hasLocal) {
+        seedDefaultLayout();
+        seedDefaultStyles();
+        libItems = [
+          { img: '', text: 'Pose: pessoa olhando para câmera' },
+          { img: '', text: 'Referência: flat lay produto' },
+          { img: '', text: 'Estilo: minimalista fundo branco' },
+          { img: '', text: 'Composição: regra dos terços' },
+          { img: '', text: 'Lighting: luz natural lateral' },
+          { img: '', text: 'Mood: profissional e limpo' },
+        ];
+        saveCurrentWf();
+      }
 
-      // Seed library
-      libItems = [
-        { img: '', text: 'Pose: pessoa olhando para câmera' },
-        { img: '', text: 'Referência: flat lay produto' },
-        { img: '', text: 'Estilo: minimalista fundo branco' },
-        { img: '', text: 'Composição: regra dos terços' },
-        { img: '', text: 'Lighting: luz natural lateral' },
-        { img: '', text: 'Mood: profissional e limpo' },
-      ];
-
-      saveCurrentWf();
+      // ── 2. Cloud sync in background — cloudLoad has 5s timeout built-in ──
+      setSyncStatus('saving');
+      const cloud = await cloudLoad();
+      if (cloud && cloud.workflows && (cloud.ts || 0) > localTs) {
+        localStorage.setItem('CA_ts', String(cloud.ts));
+        applyState(cloud);
+      }
+      setSyncStatus(cloud ? 'ok' : 'err');
     }
 
     // Run after DOM fully ready
