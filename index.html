@@ -744,40 +744,19 @@
     .ref-lib-card:hover .ref-lib-use { opacity: 1 }
 
     /* MULTI API KEYS (settings) */
-    .api-key-row {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      padding: 8px 10px;
+    .api-acc-card {
+      padding: 10px 12px;
       background: var(--bg2);
       border: 1px solid var(--b1);
       border-radius: 8px;
-      margin-bottom: 6px
+      margin-bottom: 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px
     }
-    .api-key-row input { flex: 1 }
-    .api-key-name {
-      width: 110px;
-      flex-shrink: 0;
-      padding: 6px 8px;
-      border-radius: 6px;
-      border: 1px solid var(--b2);
-      background: var(--bg);
-      color: var(--t1);
-      font-size: 11px;
-      font-family: 'DM Sans', sans-serif;
-      outline: none
-    }
-    .api-key-input {
-      flex: 1;
-      padding: 6px 8px;
-      border-radius: 6px;
-      border: 1px solid var(--b2);
-      background: var(--bg);
-      color: var(--t2);
-      font-size: 11px;
-      font-family: 'DM Mono', monospace;
-      outline: none
-    }
+    .api-acc-row { display: flex; align-items: flex-end; gap: 8px }
+    .api-acc-field { flex: 1 }
+    .api-acc-actions { display: flex; align-items: center; gap: 8px; margin-top: 2px }
     .api-key-del {
       width: 26px;
       height: 26px;
@@ -789,6 +768,18 @@
       flex-shrink: 0
     }
     .api-key-del:hover { color: #c08080; border-color: #4a2a2a; background: #2a1a1a }
+    .api-acc-del {
+      margin-left: auto;
+      padding: 5px 12px;
+      border-radius: 6px;
+      border: 1px solid var(--b1);
+      background: transparent;
+      color: var(--t4);
+      font-size: 10px;
+      cursor: pointer;
+      transition: all .15s
+    }
+    .api-acc-del:hover { color: #c08080; border-color: #4a2a2a; background: #2a1a1a }
     .api-key-add {
       padding: 6px 12px;
       border-radius: 6px;
@@ -2114,7 +2105,7 @@
           </svg>
           Log de Geração
           <button class="tb-btn" style="margin-left:auto;font-size:10px"
-            onclick="logEntries=[];renderLog()">Limpar</button>
+            onclick="logEntries=[];renderLog();saveCurrentWf()">Limpar</button>
         </div>
         <div id="log-entries"></div>
       </div>
@@ -2152,38 +2143,9 @@
       <div id="settings-view" class="view">
         <div class="sv-sec">
           <div class="sv-title">APIs de Imagem</div>
-          <div class="sv-row">
-            <div>
-              <div class="sv-name">GPT-Image / DALL-E (OpenAI)</div>
-              <div class="sv-stat ok" id="api-stat">● Configurada</div>
-            </div>
-          </div>
-          <div
-            style="padding:10px 12px;background:var(--bg2);border:1px solid var(--b1);border-radius:8px;margin-bottom:6px">
-            <label class="sv-lbl">API Key OpenAI</label>
-            <input class="sv-input" id="oai-key" type="password" placeholder="sk-...">
-            <button class="sv-save" onclick="saveKey()">Salvar chave</button>
-          </div>
-          <div class="sv-row" style="opacity:.5">
-            <div>
-              <div class="sv-name">Stability AI</div>
-              <div class="sv-stat">● Não configurada</div>
-            </div>
-          </div>
-        </div>
-        <div class="sv-sec">
-          <div class="sv-title">Contas de API (múltiplas chaves)</div>
-          <div style="font-size:10px;color:var(--t3);margin-bottom:8px">Cadastre várias chaves nomeadas (ex: "API Pedro", "API Lucas") e escolha qual usar ao gerar. As chaves ficam salvas só neste navegador — nunca são enviadas para a nuvem.</div>
+          <div style="font-size:10px;color:var(--t3);margin-bottom:8px">Cadastre suas APIs de geração de imagem. O nome escolhido é o que aparece no seletor do workspace, e cada uma usa o modelo selecionado. As chaves ficam salvas só neste navegador — nunca são enviadas para a nuvem.</div>
           <div id="api-accounts-list"></div>
-          <button class="api-key-add" onclick="addApiAccount()">+ Adicionar conta de API</button>
-        </div>
-        <div class="sv-sec">
-          <div class="sv-title">Modelo Padrão</div>
-          <select class="sv-input" id="def-model" style="width:auto" onchange="refreshResultCards()">
-            <option value="gpt-image-2">GPT-Image-2</option>
-            <option value="gpt-image-1">GPT-Image-1</option>
-            <option value="dall-e-3">DALL-E 3</option>
-          </select>
+          <button class="api-key-add" onclick="addApiAccount()">+ Adicionar nova API</button>
         </div>
       </div>
 
@@ -2651,7 +2613,7 @@
     }
 
     function buildIdentity(id, data) {
-      const refsHtml = (data.idRefs || []).map((r, ri) => `<div class="id-ref-item"><img src="${r.url}" class="id-ref-img"><span class="id-ref-name">${r.name}</span><button class="id-ref-del" onclick="this.closest('.id-ref-item').remove();if(cards['${id}']){cards['${id}'].data.idRefs.splice(${ri},1);saveCurrentWf()}">×</button></div>`).join('');
+      const refsHtml = (data.idRefs || []).map((r, ri) => `<div class="id-ref-item"><img src="${r.url}" class="id-ref-img"><span class="id-ref-name">${r.name}</span><button class="id-ref-del" onclick="delIdRef('${id}',${ri})">×</button></div>`).join('');
       const tog = data.idToggles || {};
       const on = k => tog[k] !== false;
       const tgl = k => `<div class="id-toggle${on(k) ? ' on' : ''}" onclick="toggleIdSection('${id}','${k}',this)" title="${on(k) ? 'Enviando para IA' : 'Desativado'}"></div>`;
@@ -2756,7 +2718,7 @@
     };
 
     function refreshResultCards() {
-      const model = document.getElementById('def-model')?.value || 'dall-e-3';
+      const model = getActiveModel();
       const caps = MODEL_CAPS[model] || MODEL_CAPS['dall-e-3'];
       Object.keys(cards).filter(id => cards[id]?.type === 'result').forEach(id => {
         const mdlEl = document.getElementById('cr-mdl-' + id);
@@ -2791,7 +2753,7 @@
     }
 
     function buildResult(id, data) {
-      const model = document.getElementById('def-model')?.value || 'dall-e-3';
+      const model = getActiveModel();
       const caps = MODEL_CAPS[model] || MODEL_CAPS['dall-e-3'];
       const defFmt = data.fmt || '1024x1024';
       const defQl  = data.ql  || caps.quality[0].value;
@@ -2905,17 +2867,11 @@
       reader.onload = ev => {
         const url = ev.target.result;
         const name = f.name.replace(/\.[^.]+$/, '').slice(0, 22);
-        const list = document.getElementById('id-refs-' + id);
-        if (list) {
-          const item = document.createElement('div');
-          item.className = 'id-ref-item';
-          item.innerHTML = `<img src="${url}" class="id-ref-img"><span class="id-ref-name">${name}</span><button class="id-ref-del" onclick="this.closest('.id-ref-item').remove()">×</button>`;
-          list.appendChild(item);
-        }
         if (cards[id]) {
           if (!cards[id].data.idRefs) cards[id].data.idRefs = [];
           cards[id].data.idRefs.push({ url, name });
         }
+        renderIdRefs(id);
         saveCurrentWf();
       };
       reader.readAsDataURL(f);
@@ -2957,6 +2913,19 @@
         const cont = document.getElementById('id-colors-' + id);
         if (cont) cont.innerHTML = colorSwatchesHtml(id, data.colors || []);
       }
+    }
+    function renderIdRefs(id) {
+      const list = document.getElementById('id-refs-' + id); if (!list || !cards[id]) return;
+      list.innerHTML = (cards[id].data.idRefs || []).map((r, ri) =>
+        `<div class="id-ref-item"><img src="${r.url}" class="id-ref-img"><span class="id-ref-name">${r.name}</span><button class="id-ref-del" onclick="delIdRef('${id}',${ri})">×</button></div>`
+      ).join('');
+    }
+    function delIdRef(id, idx) {
+      if (!cards[id]) return;
+      cards[id].data.idRefs = cards[id].data.idRefs || [];
+      cards[id].data.idRefs.splice(idx, 1);
+      renderIdRefs(id);
+      saveCurrentWf();
     }
     function delIdFont(id, idx) {
       if (!cards[id]) return;
@@ -3061,7 +3030,7 @@
       const key = getActiveApiKey();
       if (!key) { alert('Configure sua API Key em Configurações.'); return }
 
-      const model = document.getElementById('def-model')?.value || 'dall-e-3';
+      const model = getActiveModel();
       const prev = document.getElementById('cr-prev-' + id);
       const genBtn = document.getElementById('cr-gen-' + id);
       const prompt = buildPrompt(id);
@@ -3194,6 +3163,7 @@
         }
         resetBtn();
         renderLog();
+        saveCurrentWf();
       }
     }
 
@@ -3337,7 +3307,7 @@
       </label>
       <div class="lib-card-body">
         <textarea class="lib-card-ta" placeholder="Anotação..." rows="2"
-          oninput="libItems[${i}].text=this.value">${item.text || ''}</textarea>
+          oninput="libItems[${i}].text=this.value;saveCurrentWf()">${item.text || ''}</textarea>
       </div>`;
         card.addEventListener('dragstart', () => { libDragIdx = i; card.classList.add('dragging') });
         card.addEventListener('dragend', () => { card.classList.remove('dragging'); libDragIdx = null });
@@ -3347,13 +3317,13 @@
           if (libDragIdx === null || libDragIdx === i) return;
           const moved = libItems.splice(libDragIdx, 1)[0];
           libItems.splice(i, 0, moved);
-          renderLib();
+          renderLib(); saveCurrentWf();
         });
         grid.appendChild(card);
       });
       const addBtn = document.createElement('div');
       addBtn.className = 'lib-add-card'; addBtn.textContent = '+';
-      addBtn.onclick = () => { libItems.push({ img: '', text: '' }); renderLib() };
+      addBtn.onclick = () => { libItems.push({ img: '', text: '' }); renderLib(); saveCurrentWf() };
       grid.appendChild(addBtn);
     }
     function libUpload(e, idx) {
@@ -3575,21 +3545,21 @@
     function renameWf(id) {
       const wf = workflows.find(w => w.id === id); if (!wf) return;
       const n = prompt('Novo nome:', wf.name);
-      if (n) { wf.name = n; if (id === currentWf) document.getElementById('wf-name').textContent = n }
+      if (n) { wf.name = n; if (id === currentWf) document.getElementById('wf-name').textContent = n; saveCurrentWf() }
       renderWfList();
     }
     function dupWf(id) {
       const wf = workflows.find(w => w.id === id); if (!wf) return;
       const nid = 'wf_' + uid();
       workflows.push({ ...JSON.parse(JSON.stringify(wf)), id: nid, name: wf.name + ' (cópia)' });
-      renderWfList();
+      renderWfList(); saveCurrentWf();
     }
     function delWf(id) {
       if (workflows.length === 1) { alert('Último workflow, não pode remover.'); return }
       if (!confirm('Remover este workflow?')) return;
       workflows = workflows.filter(w => w.id !== id);
       if (currentWf === id) switchWf(workflows[0].id);
-      else renderWfList();
+      else { renderWfList(); saveCurrentWf(); }
     }
 
     /* ═══ NAV ═══ */
@@ -3670,21 +3640,7 @@
       });
     }
 
-    /* ═══ SETTINGS ═══ */
-    function saveKey() {
-      const k = document.getElementById('oai-key').value;
-      localStorage.setItem('cs_openai_key', k);
-      const stat = document.getElementById('api-stat');
-      if (stat) { stat.textContent = '● Configurada'; stat.className = 'sv-stat ok' }
-    }
-    const sk = localStorage.getItem('cs_openai_key');
-    if (sk && document.getElementById('oai-key')) {
-      document.getElementById('oai-key').value = sk;
-      const stat = document.getElementById('api-stat');
-      if (stat) { stat.textContent = '● Configurada'; stat.className = 'sv-stat ok' }
-    }
-
-    /* ═══ CONTAS DE API (múltiplas chaves) ═══ */
+    /* ═══ CONTAS DE API ═══ */
     function saveApiAccounts() {
       try { localStorage.setItem('CA_apiAccounts', JSON.stringify(apiAccounts)); } catch (e) {}
       try { localStorage.setItem('CA_activeApiId', activeApiId || ''); } catch (e) {}
@@ -3696,23 +3652,44 @@
     }
     function renderApiAccounts() {
       const wrap = document.getElementById('api-accounts-list'); if (!wrap) return;
-      if (!apiAccounts.length) { wrap.innerHTML = '<div style="font-size:10px;color:var(--t4);padding:6px 0">Nenhuma conta cadastrada ainda.</div>'; return; }
+      if (!apiAccounts.length) { wrap.innerHTML = '<div style="font-size:10px;color:var(--t4);padding:6px 0">Nenhuma API cadastrada ainda.</div>'; return; }
       wrap.innerHTML = apiAccounts.map(acc => `
-        <div class="api-key-row">
-          <input class="api-key-name" value="${(acc.name || '').replace(/"/g, '&quot;')}" placeholder="Nome da conta"
-            oninput="renameApiAccount('${acc.id}',this.value)">
-          <input class="api-key-input" type="password" value="${(acc.key || '').replace(/"/g, '&quot;')}" placeholder="sk-..."
-            oninput="setApiAccountKey('${acc.id}',this.value)">
-          <span class="api-led led-${acc.status || 'yellow'}" title="${acc.status === 'green' ? 'Funcionando' : acc.status === 'red' ? 'Não ativada' : 'Não testada'}"></span>
-          <button class="sv-save" style="margin:0;padding:6px 10px;font-size:10px" onclick="testApiAccount('${acc.id}')">Testar</button>
-          <button class="api-key-del" onclick="delApiAccount('${acc.id}')" title="Remover">×</button>
+        <div class="api-acc-card">
+          <div class="api-acc-row">
+            <div class="api-acc-field">
+              <label class="sv-lbl">Nome (aparece no workspace)</label>
+              <input class="sv-input" style="margin-top:2px" value="${(acc.name || '').replace(/"/g, '&quot;')}" placeholder="Ex: API Pedro"
+                oninput="renameApiAccount('${acc.id}',this.value)">
+            </div>
+            <span class="api-led led-${acc.status || 'yellow'}" title="${acc.status === 'green' ? 'Funcionando' : acc.status === 'red' ? 'Não ativada' : 'Não testada'}" style="margin-bottom:9px"></span>
+          </div>
+          <div class="api-acc-row">
+            <div class="api-acc-field">
+              <label class="sv-lbl">Chave de API</label>
+              <input class="sv-input" style="margin-top:2px" type="password" value="${(acc.key || '').replace(/"/g, '&quot;')}" placeholder="sk-..."
+                oninput="setApiAccountKey('${acc.id}',this.value)">
+            </div>
+          </div>
+          <div class="api-acc-row">
+            <div class="api-acc-field">
+              <label class="sv-lbl">Modelo de IA de imagem</label>
+              <select class="sv-input" style="width:auto;margin-top:2px" onchange="setApiAccountModel('${acc.id}',this.value)">
+                <option value="gpt-image-2"${(acc.model || 'gpt-image-2') === 'gpt-image-2' ? ' selected' : ''}>GPT-Image-2</option>
+                <option value="dall-e-3"${acc.model === 'dall-e-3' ? ' selected' : ''}>DALL-E 3</option>
+              </select>
+            </div>
+          </div>
+          <div class="api-acc-actions">
+            <button class="sv-save" style="margin:0;padding:5px 12px;font-size:10px" onclick="testApiAccount('${acc.id}')">Testar conexão</button>
+            <button class="api-acc-del" onclick="delApiAccount('${acc.id}')">Remover</button>
+          </div>
         </div>`).join('');
     }
     function addApiAccount() {
-      const acc = { id: 'api_' + uid(), name: `Conta ${apiAccounts.length + 1}`, key: '', status: 'yellow' };
+      const acc = { id: 'api_' + uid(), name: `API ${apiAccounts.length + 1}`, key: '', model: 'gpt-image-2', status: 'yellow' };
       apiAccounts.push(acc);
       if (!activeApiId) activeApiId = acc.id;
-      saveApiAccounts(); renderApiAccounts(); refreshGenApiSelect(); refreshApiStatusWidget();
+      saveApiAccounts(); renderApiAccounts(); refreshGenApiSelect(); refreshApiStatusWidget(); refreshResultCards();
     }
     function renameApiAccount(id, name) {
       const acc = apiAccounts.find(a => a.id === id); if (!acc) return;
@@ -3723,11 +3700,15 @@
       acc.key = key; acc.status = key ? 'yellow' : 'red';
       saveApiAccounts(); renderApiAccounts(); refreshApiStatusWidget();
     }
+    function setApiAccountModel(id, model) {
+      const acc = apiAccounts.find(a => a.id === id); if (!acc) return;
+      acc.model = model; saveApiAccounts(); refreshResultCards();
+    }
     function delApiAccount(id) {
-      if (!confirm('Remover esta conta de API?')) return;
+      if (!confirm('Remover esta API?')) return;
       apiAccounts = apiAccounts.filter(a => a.id !== id);
       if (activeApiId === id) activeApiId = apiAccounts[0]?.id || null;
-      saveApiAccounts(); renderApiAccounts(); refreshGenApiSelect(); refreshApiStatusWidget();
+      saveApiAccounts(); renderApiAccounts(); refreshGenApiSelect(); refreshApiStatusWidget(); refreshResultCards();
     }
     async function testApiAccount(id) {
       const acc = apiAccounts.find(a => a.id === id); if (!acc) return;
@@ -3746,25 +3727,25 @@
       sel.innerHTML = apiAccounts.map(a => `<option value="${a.id}"${a.id === activeApiId ? ' selected' : ''}>${(a.name || 'Conta').replace(/</g, '&lt;')}</option>`).join('');
     }
     function setActiveApiKey(id) {
-      activeApiId = id; saveApiAccounts(); refreshApiStatusWidget();
+      activeApiId = id; saveApiAccounts(); refreshApiStatusWidget(); refreshResultCards();
     }
     function getActiveApiKey() {
       const acc = apiAccounts.find(a => a.id === activeApiId);
-      if (acc?.key) return acc.key;
-      return localStorage.getItem('cs_openai_key') || document.getElementById('oai-key')?.value || '';
+      return acc?.key || '';
+    }
+    function getActiveModel() {
+      const acc = apiAccounts.find(a => a.id === activeApiId);
+      return acc?.model || 'gpt-image-2';
     }
     function refreshApiStatusWidget() {
       const dot = document.getElementById('api-status-dot');
       const list = document.getElementById('api-status-list');
       const acc = apiAccounts.find(a => a.id === activeApiId);
-      let status = 'yellow';
-      if (acc) status = acc.status || 'yellow';
-      else if (localStorage.getItem('cs_openai_key')) status = 'yellow';
-      else status = 'red';
+      const status = acc ? (acc.status || 'yellow') : 'red';
       if (dot) dot.className = 'api-led led-' + status;
       if (list) {
         if (!apiAccounts.length) {
-          list.innerHTML = '<div class="asd-row"><span class="asd-name">Chave única (Configurações)</span><span class="asd-state">' + (localStorage.getItem('cs_openai_key') ? '🟡 configurada' : '🔴 não configurada') + '</span></div>';
+          list.innerHTML = '<div class="asd-row"><span class="asd-name">Nenhuma API cadastrada</span><span class="asd-state">🔴 configure em Configurações</span></div>';
         } else {
           list.innerHTML = apiAccounts.map(a => `<div class="asd-row"><span class="asd-name">${(a.name || 'Conta').replace(/</g, '&lt;')}${a.id === activeApiId ? ' (ativa)' : ''}</span><span class="asd-state">${a.status === 'green' ? '🟢 funcionando' : a.status === 'red' ? '🔴 não ativada' : '🟡 não testada'}</span></div>`).join('');
         }
@@ -3898,6 +3879,7 @@
       refreshGenApiSelect();
       refreshApiStatusWidget();
       initDefault();
+      refreshResultCards();
     });
   </script>
 </body>
